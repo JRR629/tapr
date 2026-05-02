@@ -1,0 +1,944 @@
+[
+  {
+    "id": "856c1bd1-1d5a-47a8-9f73-d03f2ad089e7",
+    "brand": "2XU",
+    "name": "Propel P:1",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "max buoyancy, hip correction"
+  },
+  {
+    "id": "c0c7739d-0401-44fd-bc6f-83c3b48e3c29",
+    "brand": "2XU",
+    "name": "Propel:2",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "balanced buoyancy, mid-level"
+  },
+  {
+    "id": "e5a50c45-47bb-447e-b594-7eed17016fe3",
+    "brand": "2XU",
+    "name": "Propel P:2",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "body position correction focus"
+  },
+  {
+    "id": "e74436c6-310d-440a-9c7a-f3fad10ff82c",
+    "brand": "2XU",
+    "name": "Propel Pro",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "flexibility-first, technique assumed"
+  },
+  {
+    "id": "2767dfbc-ed5b-4b6c-91df-4e571d9be1ec",
+    "brand": "2XU",
+    "name": "Propel:1 Sleeveless",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "sleeveless, balanced warm-water"
+  },
+  {
+    "id": "d6b88a54-3b2f-41f2-8de0-e325868ab9a4",
+    "brand": "2XU",
+    "name": "Propel:1",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "buoyancy panels, budget-friendly"
+  },
+  {
+    "id": "aaf3b3c3-c24f-446b-9155-b70c5ddcc722",
+    "brand": "Aqua Sphere",
+    "name": "Racer V3",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "balanced mid-range performer"
+  },
+  {
+    "id": "3578198a-9bc8-46b6-aa3e-4ebaa4b2b0a6",
+    "brand": "Aquaman",
+    "name": "Swim Function",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "flexibility-focused, swimrun design"
+  },
+  {
+    "id": "8002c22f-42f1-4f17-9c29-70b439d9e84c",
+    "brand": "Aquaman",
+    "name": "Bionik Sleeveless",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "sleeveless, strong swimmer focus"
+  },
+  {
+    "id": "c83067b6-4510-4cb4-be16-31e917fbc429",
+    "brand": "Aquaman",
+    "name": "Cell Gold",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "flexibility-first, technique assumed"
+  },
+  {
+    "id": "8844db5a-aaf7-43f6-814e-2f0e340de5b0",
+    "brand": "Aquaman",
+    "name": "The ART",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "compression, strong technique suited"
+  },
+  {
+    "id": "ca74cfc3-ddb3-4547-953f-a9e095012b8a",
+    "brand": "Aquaman",
+    "name": "DNA",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "max buoyancy, value-focused"
+  },
+  {
+    "id": "e3162be2-616b-4e05-841b-72ccf940c17f",
+    "brand": "Aquaman",
+    "name": "Bionik",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "neutral buoyancy, all-around"
+  },
+  {
+    "id": "101a4e83-3d71-4a61-9002-6a6f871feac9",
+    "brand": "Blueseventy",
+    "name": "Helix",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "flagship race, strong swimmers"
+  },
+  {
+    "id": "c971e9cc-3ad7-47c2-89b6-ce155aad0675",
+    "brand": "Blueseventy",
+    "name": "Thermal Reaction",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "cold water, balanced performance"
+  },
+  {
+    "id": "ed1fa93d-73ff-46a7-9ceb-5598db294ec0",
+    "brand": "Blueseventy",
+    "name": "Reaction Sleeveless",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "sleeveless, strong swimmer focus"
+  },
+  {
+    "id": "4d08ca6c-8a4f-4760-b9b3-ccb702d16a56",
+    "brand": "Blueseventy",
+    "name": "Reaction",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "balanced, all-around performer"
+  },
+  {
+    "id": "75ab7791-0999-4a64-a279-6bb7fa53a888",
+    "brand": "Blueseventy",
+    "name": "Sprint",
+    "swimmer_level": [
+      "beginner"
+    ],
+    "reasoning": "entry, beginner-specific design"
+  },
+  {
+    "id": "70ecdbc4-eab0-45cb-a6ec-cd1132760ff3",
+    "brand": "Blueseventy",
+    "name": "Glide Short John",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "open water, warm simple suit"
+  },
+  {
+    "id": "a07c92f6-b93a-4aa6-b957-f68875f73b23",
+    "brand": "Blueseventy",
+    "name": "Fusion",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "mid-range, leg lift focused"
+  },
+  {
+    "id": "df344d71-3407-4f36-9f0a-72d67b3fd58f",
+    "brand": "Colting",
+    "name": "T04",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "aggressive buoyancy, flexible arms"
+  },
+  {
+    "id": "2523430c-1a22-433b-901b-267070e3388e",
+    "brand": "Dare2Tri",
+    "name": "MACH 4",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "buoyancy plus strong flexibility"
+  },
+  {
+    "id": "634806d4-7235-4a1f-bf8f-2eb3aff99a10",
+    "brand": "deboer",
+    "name": "Iceman 4.0",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "extreme cold, max buoyancy thermal"
+  },
+  {
+    "id": "24f25486-7124-46b7-8545-bd06e58e8ae6",
+    "brand": "deboer",
+    "name": "Fjord 3.0",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "flexibility-first, strong swimmers"
+  },
+  {
+    "id": "f113f359-9910-412b-ad08-654b4b79d55f",
+    "brand": "deboer",
+    "name": "Fjord 3.1 Sleeveless",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "sleeveless, flexibility-focused"
+  },
+  {
+    "id": "675ace64-0b70-46bd-9ede-1daa859d0a2f",
+    "brand": "deboer",
+    "name": "Fjord 4.0",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "flagship flexibility, elite focus"
+  },
+  {
+    "id": "768135af-c9b3-4ebe-9b6f-ed76e79d09d5",
+    "brand": "deboer",
+    "name": "Norseman 3.0",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "extreme cold, competitive warmth"
+  },
+  {
+    "id": "deaa8625-349d-4ccd-b057-6a701c3ba3d7",
+    "brand": "HUUB",
+    "name": "Lurz Open Water",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "open water, stroke efficiency"
+  },
+  {
+    "id": "0ac63ac9-9a4e-4502-a919-25cbfdfa5636",
+    "brand": "HUUB",
+    "name": "Archimedes IV",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "buoyancy plus alignment tech"
+  },
+  {
+    "id": "f0a8daac-c1e2-48a8-828d-e280110bfd68",
+    "brand": "HUUB",
+    "name": "Brownlee Agilis",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "leg lift, flexibility balanced"
+  },
+  {
+    "id": "0846fb1a-7275-4ab6-8ac6-2f58064764a4",
+    "brand": "HUUB",
+    "name": "Alchemy 3:5",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "balanced buoyancy, flexible neoprene"
+  },
+  {
+    "id": "e5332404-132f-48de-9d20-d21af5ac2fde",
+    "brand": "HUUB",
+    "name": "Agilis II",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "premium distance, technique assumed"
+  },
+  {
+    "id": "ce965f22-2b74-4024-b266-64a98a26dd28",
+    "brand": "HUUB",
+    "name": "Aegis X 3:3",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "equal 3mm, beginner women"
+  },
+  {
+    "id": "286f7a69-1138-499d-8426-ea69590b44eb",
+    "brand": "HUUB",
+    "name": "Brownlee Agilis II",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "flexibility-first, strong swimmers"
+  },
+  {
+    "id": "aca23c87-8a0c-4972-9e00-033bf49fa1d8",
+    "brand": "HUUB",
+    "name": "Archimedes 4:4",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "buoyancy correction, non-swimmers"
+  },
+  {
+    "id": "5efc27d6-d460-48eb-a7b4-2b4f6d7ce8a3",
+    "brand": "HUUB",
+    "name": "Aegis X",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "balanced all-rounder, mid-range"
+  },
+  {
+    "id": "1890cdaa-2248-47c6-80fd-e93db090feae",
+    "brand": "HUUB",
+    "name": "Patriot Aegis X",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "3:3 balanced, entry price"
+  },
+  {
+    "id": "a7c9c4be-0fbf-4faf-b4f0-631b65d01d39",
+    "brand": "HUUB",
+    "name": "Armea All Seasons",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "thermal, beginner-friendly design"
+  },
+  {
+    "id": "76faa929-1fa0-4f0e-8e75-11f9dbca4381",
+    "brand": "HUUB",
+    "name": "Archimedes 3 Thermal",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "cold water, flagship buoyancy"
+  },
+  {
+    "id": "ebbadcd8-4849-4956-821b-eef7843894ab",
+    "brand": "HUUB",
+    "name": "Archimedes 3",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "proven buoyancy, experienced women"
+  },
+  {
+    "id": "09ca71c9-64e3-4dfa-a852-dd5360e39019",
+    "brand": "HUUB",
+    "name": "Surface",
+    "swimmer_level": [
+      "beginner"
+    ],
+    "reasoning": "entry, safety visibility design"
+  },
+  {
+    "id": "f1ec2632-9f60-4244-bf45-9755264d5867",
+    "brand": "HUUB",
+    "name": "Amnis",
+    "swimmer_level": [
+      "beginner"
+    ],
+    "reasoning": "most affordable, absolute beginners"
+  },
+  {
+    "id": "79f98144-e19a-42a3-ba4b-14204030d941",
+    "brand": "HUUB",
+    "name": "Pinnacle",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "corrects lateral body snaking"
+  },
+  {
+    "id": "64e24596-527b-48da-8573-dea44b7dd869",
+    "brand": "HUUB",
+    "name": "Altius II",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "confidence building, simple suit"
+  },
+  {
+    "id": "2382eeb9-7f9e-474f-a6b8-956c8dae5d98",
+    "brand": "HUUB",
+    "name": "Altius Thermal",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "cold water, arms neutral women"
+  },
+  {
+    "id": "28a209c5-f2d4-47a3-8fe7-9554e1828bd5",
+    "brand": "HUUB",
+    "name": "Aura 2",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "female physiology, natural position"
+  },
+  {
+    "id": "7ed0e6a9-79ec-4fd6-a62b-e855829c9337",
+    "brand": "HUUB",
+    "name": "Alta Thermal",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "cold water, beginner women thermal"
+  },
+  {
+    "id": "04c4044b-b3f8-46fe-8dcd-87607813e27e",
+    "brand": "HUUB",
+    "name": "Catalyst",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "first performance suit, arms neutral"
+  },
+  {
+    "id": "8b4db491-9236-4ba2-b36d-6030bb0b4f0a",
+    "brand": "Orca",
+    "name": "Athlex Float V2",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "max buoyancy, sinking legs"
+  },
+  {
+    "id": "5561f385-9b87-4fd8-9e3b-dcf088d1ee71",
+    "brand": "Orca",
+    "name": "Athlex Flex V2",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "flexibility-focused, strong swimmers"
+  },
+  {
+    "id": "d26351c7-3a87-4bf9-bd54-7f525a597dd9",
+    "brand": "ROKA",
+    "name": "Maverick ProMax",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "maximum buoyancy, sinking swimmers"
+  },
+  {
+    "id": "922c297c-21b0-4aaa-a7e9-e0ef2c2aec2a",
+    "brand": "ROKA",
+    "name": "Maverick Pro.3",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "balanced buoyancy, natural rotation"
+  },
+  {
+    "id": "45373151-be63-48fe-a564-3eb67e6f0b24",
+    "brand": "ROKA",
+    "name": "Maverick ProMax Sleeveless",
+    "swimmer_level": [
+      "beginner",
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "sleeveless, max buoyancy lift"
+  },
+  {
+    "id": "859fcbb9-9e9a-4b91-a9a9-7b4538e27cab",
+    "brand": "ROKA",
+    "name": "Maverick Comp.3",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "entry ROKA, arms-up tech"
+  },
+  {
+    "id": "dc412305-afaa-4255-9da1-759e625f7411",
+    "brand": "ROKA",
+    "name": "Maverick Pro II",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "balanced, mid-lineup performer"
+  },
+  {
+    "id": "13434c94-2d5b-417c-a0d7-59c77d08b7d2",
+    "brand": "ROKA",
+    "name": "Maverick X.3 Thermal",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "cold water, flagship buoyancy"
+  },
+  {
+    "id": "33a2a5f9-310e-41cb-863d-063fae88c8d3",
+    "brand": "ROKA",
+    "name": "Maverick MX",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "max buoyancy, sinky swimmers"
+  },
+  {
+    "id": "cacc8555-2395-4ef2-88c1-412a2b22f070",
+    "brand": "ROKA",
+    "name": "Maverick X2",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "elite flexibility, technique assumed"
+  },
+  {
+    "id": "70ab3f23-46c4-4427-9495-0b11fb45257c",
+    "brand": "ROKA",
+    "name": "Maverick Comp.3 Sleeveless",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "sleeveless, entry ROKA DNA"
+  },
+  {
+    "id": "ccaed48b-be10-440f-9dbb-0d9882e06b55",
+    "brand": "ROKA",
+    "name": "Maverick X.3",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "flagship flexibility, strong swimmers"
+  },
+  {
+    "id": "7d65b526-7cb7-40f5-85b6-c3adbd1581c2",
+    "brand": "Sailfish",
+    "name": "Ignite 2",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "minimal buoyancy, flexible suit"
+  },
+  {
+    "id": "bb56f256-bdad-4a2e-a2c4-7966dada9e3f",
+    "brand": "Sumarpo",
+    "name": "Vanguard",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "balanced buoyancy, flexible arms"
+  },
+  {
+    "id": "6c6a88e9-03d9-4cd6-abc0-77890864a7f1",
+    "brand": "Sumarpo",
+    "name": "Prana Core",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "elite flagship, cold water"
+  },
+  {
+    "id": "02e1fb1b-8a65-4c3d-bc6f-ab68fc5fd52c",
+    "brand": "Sumarpo",
+    "name": "Akula",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "flexibility-focused, advanced athletes"
+  },
+  {
+    "id": "f370a3a8-2630-4259-81a8-8c596e8f4ef3",
+    "brand": "Sumarpo",
+    "name": "Elite Pro",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "premium materials, mid-to-advanced"
+  },
+  {
+    "id": "c1eaebb3-d7cf-47a2-8546-40ed928ef7ea",
+    "brand": "Sumarpo",
+    "name": "N-Joy",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "entry-level, budget swimmers"
+  },
+  {
+    "id": "e4c0e65e-aa7d-4298-bfbf-8c46393f5d30",
+    "brand": "Sumarpo",
+    "name": "Nova",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "entry buoyancy, warm water"
+  },
+  {
+    "id": "dbf9c321-0e7b-4da1-baad-22ce29b98e69",
+    "brand": "Sumarpo",
+    "name": "Nova Sleeveless",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "sleeveless entry, warm water"
+  },
+  {
+    "id": "610ba2a1-ca6e-42fc-a25e-f49fa13a76c9",
+    "brand": "Sumarpo",
+    "name": "Thermal Titanium",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "cold water thermal priority"
+  },
+  {
+    "id": "dacaa15b-adb7-461a-ba9d-c3fa779d9912",
+    "brand": "Sumarpo",
+    "name": "Race",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "mid-range, performance focused"
+  },
+  {
+    "id": "baf2e998-74e1-43f5-acb6-c631e632e30c",
+    "brand": "Sumarpo",
+    "name": "Victory",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "elite flagship, technique assumed"
+  },
+  {
+    "id": "388add43-169a-486a-94cb-55b1fdb44909",
+    "brand": "Sumarpo",
+    "name": "Vanguard Sleeveless",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "sleeveless, competition level"
+  },
+  {
+    "id": "dbffbc35-75b3-4e36-877a-094ca0c50d9f",
+    "brand": "Synergy",
+    "name": "Hyperion Elite",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "flexible, strong value women"
+  },
+  {
+    "id": "6a02db0c-d59c-44b5-9cbf-5ce0c1061e99",
+    "brand": "Synergy",
+    "name": "Hybrid EFX4",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "high buoyancy, corrects position"
+  },
+  {
+    "id": "930c6f1f-7976-461b-8c0c-357625d34b0d",
+    "brand": "Synergy",
+    "name": "Endorphin Thermal",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "cold water, flexibility-focused"
+  },
+  {
+    "id": "bb4b94f3-5f9e-4df2-a52a-052ff25c3f1e",
+    "brand": "Synergy",
+    "name": "Vantage Pro",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "flagship, elite age-groupers"
+  },
+  {
+    "id": "3b871419-d4f9-4d23-8ede-d7273f3fed87",
+    "brand": "Synergy",
+    "name": "Hybrid EFX3",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "balanced buoyancy, flexible arms"
+  },
+  {
+    "id": "ccbe461a-e5b1-408c-83ad-b65274f01d2e",
+    "brand": "TYR",
+    "name": "Hurricane Cat 3",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "balanced buoyancy, mid-range"
+  },
+  {
+    "id": "6135ec53-9600-453f-bf4f-0852b69ad0d2",
+    "brand": "TYR",
+    "name": "Hurricane Cat 1 Sleeveless",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "sleeveless entry, warm water"
+  },
+  {
+    "id": "cb0b042e-be28-47ba-bf93-b3870aa1d9e5",
+    "brand": "XTERRA",
+    "name": "Volt Sleeveless",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "sleeveless entry, affordable basic"
+  },
+  {
+    "id": "77a9bd99-d613-4db0-b8a8-32950c8ec913",
+    "brand": "XTERRA",
+    "name": "Vortex",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "max buoyancy, best-seller"
+  },
+  {
+    "id": "6e8364f2-ebd9-4832-8328-35c0e39711b5",
+    "brand": "XTERRA",
+    "name": "Vengeance",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "aggressive lift, strong swimmers"
+  },
+  {
+    "id": "40c96409-a48f-4d2d-af0b-1d9998c96dff",
+    "brand": "XTERRA",
+    "name": "Vengeance Sleeveless",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "sleeveless, X-AIR leg lift"
+  },
+  {
+    "id": "7b6071bd-989b-43ec-8ace-c4acea267d6c",
+    "brand": "XTERRA",
+    "name": "Vector Pro",
+    "swimmer_level": [
+      "beginner"
+    ],
+    "reasoning": "budget entry, first wetsuit"
+  },
+  {
+    "id": "fcc8848a-bd6f-4214-9c07-d9e684b9b68a",
+    "brand": "XTERRA",
+    "name": "Vortex Sleeveless",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "sleeveless, max buoyancy entry"
+  },
+  {
+    "id": "a24d25a3-e227-4e62-abdf-05ac3bfa949f",
+    "brand": "Yonda",
+    "name": "Spook",
+    "swimmer_level": [
+      "beginner"
+    ],
+    "reasoning": "entry, high-vis beginner suit"
+  },
+  {
+    "id": "4878b50c-5b92-40be-81f9-fe49177bffae",
+    "brand": "Z3ROD",
+    "name": "Sleeveless Flex",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "sleeveless, strong swimmers"
+  },
+  {
+    "id": "cbc2837e-4b56-4c31-997b-15748571a741",
+    "brand": "Z3ROD",
+    "name": "Archi",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "buoyancy correction, accessible price"
+  },
+  {
+    "id": "846db172-f5ba-4bde-b2db-31a3912e8e52",
+    "brand": "Zone3",
+    "name": "Vision",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "high buoyancy, sinking legs"
+  },
+  {
+    "id": "50da1815-c410-4aca-a1fa-a2f4939e3be8",
+    "brand": "Zone3",
+    "name": "Ascend Sleeveless",
+    "swimmer_level": [
+      "intermediate"
+    ],
+    "reasoning": "sleeveless entry, balanced buoyancy"
+  },
+  {
+    "id": "466cce1f-c533-4ab8-aba5-f60c5adbd02a",
+    "brand": "Zone3",
+    "name": "Aspire",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "technique-feedback panels, flexible"
+  },
+  {
+    "id": "7664c94d-8cec-40d1-ba1a-e0ca7f582935",
+    "brand": "Zone3",
+    "name": "Vanquish-X",
+    "swimmer_level": [
+      "intermediate",
+      "advanced"
+    ],
+    "reasoning": "premium buoyancy, flexible arms"
+  },
+  {
+    "id": "23e3f7a0-91d4-4f25-a9e9-b4927be20b96",
+    "brand": "Zone3",
+    "name": "Advance",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "entry buoyancy, developing athletes"
+  },
+  {
+    "id": "7c314b91-8d30-46ba-af5a-e6a76567cc05",
+    "brand": "Zone3",
+    "name": "Vanquish X",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "1.5mm arms, technique assumed"
+  },
+  {
+    "id": "e7dd4075-1e1e-48ab-a87b-76aa94741c4a",
+    "brand": "Zone3",
+    "name": "Agile",
+    "swimmer_level": [
+      "beginner"
+    ],
+    "reasoning": "comfort-first, beginner friendly"
+  },
+  {
+    "id": "d904d06e-6de6-41af-b2c4-9160088e2c97",
+    "brand": "Zone3",
+    "name": "Glide",
+    "swimmer_level": [
+      "beginner"
+    ],
+    "reasoning": "first-timer, forgiving entry suit"
+  },
+  {
+    "id": "4a77ffd8-21c2-43da-9508-bdc76292af96",
+    "brand": "Zoot",
+    "name": "WikiWiki Aurora Float",
+    "swimmer_level": [
+      "beginner",
+      "intermediate"
+    ],
+    "reasoning": "max buoyancy, flexible arms"
+  },
+  {
+    "id": "a2a3a7a0-6cfa-422b-81cd-aea3da602678",
+    "brand": "Zoot",
+    "name": "WikiWiki 3.0",
+    "swimmer_level": [
+      "advanced"
+    ],
+    "reasoning": "ultra-thin arms, strong swimmers"
+  }
+]

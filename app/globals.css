@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes slideInForward {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInBack {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-forward {
+  animation: slideInForward 0.22s ease-out both;
+}
+
+.animate-slide-in-back {
+  animation: slideInBack 0.22s ease-out both;
+}
+
+:root {
+  --color-navy: #0A1628;
+  --color-navy-light: #0F2040;
+  --color-navy-border: #1A3A5C;
+  --color-orange: #FF6B35;
+  --color-orange-hover: #E55A24;
+  --color-orange-muted: rgba(255, 107, 53, 0.12);
+  --color-white: #FFFFFF;
+  --color-gray-300: #D1D5DB;
+  --color-gray-400: #9CA3AF; /* WCAG AA accessible muted text — 7.3:1 on navy */
+  --color-gray-500: #6B7280; /* decorative only — labels, borders, icons */
+  --color-success: #22C55E;
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
+
+  /* shadcn/ui overrides — map to navy/orange palette */
+  --background: 214 45% 10%;
+  --foreground: 0 0% 100%;
+  --card: 214 45% 14%;
+  --card-foreground: 0 0% 100%;
+  --popover: 214 45% 14%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 19 100% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 214 45% 16%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 214 45% 16%;
+  --muted-foreground: 220 9% 46%;
+  --accent: 214 45% 20%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 45% 22%;
+  --input: 214 45% 10%;
+  --ring: 19 100% 60%;
+  --radius: 0.5rem;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background: radial-gradient(ellipse at top, #0F2040 0%, #0A1628 70%);
+  background-attachment: fixed;
+  background-image: radial-gradient(ellipse at top, #0F2040 0%, #0A1628 70%), radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: auto, 28px 28px;
+  color: var(--color-white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem; /* 16px base — WCAG 1.4.4 */
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* WCAG 2.1 AA focus indicators — visible for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #FF6B35;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1, h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.font-display {
+  font-family: 'Bebas Neue', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+@keyframes tapr-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
