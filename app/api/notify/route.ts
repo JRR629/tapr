@@ -5,9 +5,6 @@ const notifySchema = z.object({
   email: z.string().email('Invalid email address'),
 })
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
-const FROM = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'
 const NOTIFY_TO = 'jon@taprai.com'
 
 export async function POST(request: Request) {
@@ -23,6 +20,8 @@ export async function POST(request: Request) {
     }
 
     const { email } = parsed.data
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    const FROM = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'
 
     await Promise.all([
       resend.emails.send({
