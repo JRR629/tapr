@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAllProductsByCategory } from '@/lib/gear'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)

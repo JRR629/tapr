@@ -1,5 +1,7 @@
 import EmailCapture from '@/components/EmailCapture'
 
+export const dynamic = 'force-dynamic'
+
 export default function MarketingPage() {
   return (
     <div className="min-h-screen bg-[#0A1628]" style={{ background: 'radial-gradient(ellipse at top, #0F2040 0%, #0A1628 60%)' }}>
