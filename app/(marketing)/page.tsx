@@ -1,17 +1,6 @@
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import EmailCapture from '@/components/EmailCapture'
 
-export const dynamic = 'force-dynamic'
-
-export default async function MarketingPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (user) {
-    redirect('/dashboard')
-  }
-
+export default function MarketingPage() {
   return (
     <div className="min-h-screen bg-[#0A1628]" style={{ background: 'radial-gradient(ellipse at top, #0F2040 0%, #0A1628 60%)' }}>
       <Nav />
@@ -28,19 +17,12 @@ function Nav() {
   return (
     <nav className="px-6 py-5 flex items-center justify-between max-w-6xl mx-auto">
       <div className="font-display text-2xl text-[#FF6B35]">TAPR</div>
-      <div className="hidden sm:flex items-center gap-4">
-        <Link href="/login" className="text-[#D1D5DB] hover:text-white transition-colors text-sm font-medium">
-          Sign in
-        </Link>
-        <Link href="/signup" className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-6 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px] flex items-center">
-          Get started free
-        </Link>
-      </div>
-      <div className="sm:hidden">
-        <Link href="/signup" className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-4 py-2 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] text-sm min-h-[44px] flex items-center">
-          Get started
-        </Link>
-      </div>
+      <a
+        href="#waitlist"
+        className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-6 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px] flex items-center"
+      >
+        Join the waitlist
+      </a>
     </nav>
   )
 }
@@ -48,8 +30,9 @@ function Nav() {
 function Hero() {
   return (
     <section className="max-w-4xl mx-auto px-6 py-24 md:py-36 text-center">
-      <div className="text-[#FF6B35] text-xs font-semibold uppercase tracking-[0.2em] mb-4">
-        Built for triathletes
+      <div className="inline-flex items-center gap-2 bg-[rgba(255,107,53,0.12)] text-[#FF6B35] text-xs font-semibold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full mb-6">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] animate-pulse" />
+        Launching soon
       </div>
       <h1 className="font-display text-6xl md:text-8xl text-white leading-none mb-6">
         Gear that fits your race.
@@ -60,10 +43,13 @@ function Hero() {
         Tapr asks the questions that matter, runs your answers against expert reviews, and tells you exactly what to buy — and why it's right for you specifically.
       </p>
       <div className="flex flex-col items-center gap-4">
-        <Link href="/signup" className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-8 py-4 rounded-md text-lg transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[52px] flex items-center justify-center">
-          Get your first recommendation free →
-        </Link>
-        <p className="text-[#6B7280] text-sm">Free for 10 recommendations · No credit card required · Built for triathletes</p>
+        <a
+          href="#waitlist"
+          className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-8 py-4 rounded-md text-lg transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[52px] flex items-center justify-center"
+        >
+          Get notified at launch →
+        </a>
+        <p className="text-[#6B7280] text-sm">5 free credits included at launch · No credit card required · Built for triathletes</p>
       </div>
     </section>
   )
@@ -152,16 +138,14 @@ function WhyTapr() {
 
 function FinalCTA() {
   return (
-    <section className="max-w-2xl mx-auto px-6 py-20 text-center">
+    <section id="waitlist" className="max-w-2xl mx-auto px-6 py-20 text-center">
       <h2 className="font-display text-4xl md:text-5xl text-white mb-4">
-        Your next race deserves better than a Google search.
+        Be first through the door.
       </h2>
-      <p className="text-[#D1D5DB] mb-8">
-        Get a personalized gear recommendation in 3 minutes. Free to start.
+      <p className="text-[#D1D5DB] mb-8 max-w-lg mx-auto">
+        We're putting the finishing touches on Tapr. Drop your email and you'll get a launch-day notification — plus 5 free credits to start.
       </p>
-      <Link href="/signup" className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-8 py-4 rounded-md text-lg transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[52px] inline-flex items-center justify-center">
-        Get your first recommendation free →
-      </Link>
+      <EmailCapture />
     </section>
   )
 }
@@ -169,12 +153,12 @@ function FinalCTA() {
 function Footer() {
   return (
     <footer className="max-w-6xl mx-auto px-6 py-8 border-t border-[#1A3A5C] flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div className="text-[#6B7280] text-sm">© 2025 Tapr</div>
+      <div className="text-[#6B7280] text-sm">© 2025 Taprai, LLC</div>
       <div className="text-[#6B7280] text-xs text-center max-w-md">
         Tapr earns a commission on purchases made through our links. This never influences our recommendations.
       </div>
       <div className="flex items-center gap-4 text-[#6B7280] text-sm">
-        <Link href="/login" className="hover:text-white transition-colors">Sign in</Link>
+        <a href="#waitlist" className="hover:text-white transition-colors">Join waitlist</a>
       </div>
     </footer>
   )

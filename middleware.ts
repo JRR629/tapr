@@ -30,10 +30,16 @@ export async function middleware(request: NextRequest) {
 
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/reset')
   const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/gear') || pathname.startsWith('/profile') || pathname.startsWith('/billing') || pathname.startsWith('/admin') || pathname.startsWith('/onboarding')
-  const isRoot = pathname === '/'
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages to dashboard
   if (user && isAuthRoute) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
+
+  // Redirect authenticated users from root to dashboard
+  if (user && pathname === '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
@@ -43,13 +49,6 @@ export async function middleware(request: NextRequest) {
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return NextResponse.redirect(url)
-  }
-
-  // Root redirect: authenticated → dashboard, unauthenticated → login
-  if (isRoot) {
-    const url = request.nextUrl.clone()
-    url.pathname = user ? '/dashboard' : '/login'
     return NextResponse.redirect(url)
   }
 
