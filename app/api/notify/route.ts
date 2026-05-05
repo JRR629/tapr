@@ -20,6 +20,12 @@ export async function POST(request: Request) {
     }
 
     const { email } = parsed.data
+
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('[notify] RESEND_API_KEY not configured')
+      return Response.json({ data: { success: true } }, { status: 200 })
+    }
+
     const resend = new Resend(process.env.RESEND_API_KEY)
     const FROM = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'
 
