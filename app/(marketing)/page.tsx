@@ -134,8 +134,8 @@ function WhyTapr() {
           </p>
         </div>
       </div>
-      <p className="text-[#6B7280] text-center text-sm italic mt-8">
-        The right gear decision isn't about finding more information. It's about filtering the right information for you. That's what Tapr is built to do.
+      <p className="text-[#D1D5DB] text-center text-base md:text-lg italic mt-10 max-w-2xl mx-auto leading-relaxed">
+        The right gear decision isn&apos;t about finding more information. It&apos;s about filtering the right information for you. That&apos;s what Tapr is built to do.
       </p>
     </section>
   )
