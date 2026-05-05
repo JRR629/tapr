@@ -18,7 +18,10 @@ export default function MarketingPage() {
 function Nav() {
   return (
     <nav className="px-6 py-5 flex items-center justify-between max-w-6xl mx-auto">
-      <div className="font-display text-2xl text-[#FF6B35]">TAPR</div>
+      <div>
+        <div className="font-display text-5xl leading-none text-[#FF6B35]">TAPR</div>
+        <div className="text-[#6B7280] text-[10px] font-semibold uppercase tracking-[0.2em] mt-0.5">Gear. Matched. Perfectly.</div>
+      </div>
       <a
         href="#waitlist"
         className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-6 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px] flex items-center"
