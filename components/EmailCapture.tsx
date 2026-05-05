@@ -35,8 +35,8 @@ export default function EmailCapture() {
     return (
       <div className="bg-[#0F2040] border border-[#FF6B35] rounded-lg px-8 py-6 text-center max-w-md mx-auto">
         <div className="text-[#FF6B35] text-2xl mb-2">✓</div>
-        <p className="text-white font-semibold text-lg">You're on the list.</p>
-        <p className="text-[#D1D5DB] text-sm mt-1">We'll email you the moment Tapr goes live.</p>
+        <p className="text-white font-semibold text-lg">You&apos;re on the list.</p>
+        <p className="text-[#D1D5DB] text-sm mt-1">We&apos;ll email you the moment Tapr goes live.</p>
       </div>
     )
   }
