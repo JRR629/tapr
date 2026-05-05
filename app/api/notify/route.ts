@@ -31,14 +31,9 @@ export async function POST(request: Request) {
     const resend = new Resend(process.env.RESEND_API_KEY)
     const FROM = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'
 
-    // Save to Resend Audience if configured
-    if (process.env.RESEND_AUDIENCE_ID) {
-      await resend.contacts.create({
-        email,
-        audienceId: process.env.RESEND_AUDIENCE_ID,
-        unsubscribed: false,
-      }).catch((err) => console.error('[notify] audience save failed:', err))
-    }
+    // Save to Resend global contacts
+    await resend.contacts.create({ email, unsubscribed: false })
+      .catch((err) => console.error('[notify] contact save failed:', err))
 
     await Promise.all([
       resend.emails.send({
