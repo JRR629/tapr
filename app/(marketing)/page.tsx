@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import EmailCapture from '@/components/EmailCapture'
 
 export const dynamic = 'force-dynamic'
@@ -17,11 +18,14 @@ export default function MarketingPage() {
 
 function Nav() {
   return (
-    <nav className="px-6 py-5 flex items-center justify-between max-w-6xl mx-auto">
-      <div>
-        <div className="font-display text-5xl leading-none text-[#FF6B35]">TAPR</div>
-        <div className="text-[#6B7280] text-[10px] font-semibold uppercase tracking-[0.2em] mt-0.5">Gear. Matched. Perfectly.</div>
-      </div>
+    <nav className="px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
+      <Image
+        src="/logo-sidebar.svg"
+        alt="Tapr — Gear. Matched. Perfectly."
+        width={148}
+        height={76}
+        priority
+      />
       <a
         href="#waitlist"
         className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-6 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px] flex items-center"
@@ -34,7 +38,7 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="max-w-4xl mx-auto px-6 py-24 md:py-36 text-center">
+    <section className="max-w-4xl mx-auto px-6 py-16 md:py-24 text-center">
       <div className="inline-flex items-center gap-2 bg-[rgba(255,107,53,0.12)] text-[#FF6B35] text-xs font-semibold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full mb-6">
         <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] animate-pulse" />
         Launching soon
@@ -80,7 +84,7 @@ function HowItWorks() {
   ]
 
   return (
-    <section className="max-w-5xl mx-auto px-6 py-20">
+    <section className="max-w-5xl mx-auto px-6 py-12 md:py-16">
       <div className="text-[#FF6B35] text-xs font-semibold uppercase tracking-[0.2em] text-center mb-3">
         How it works
       </div>
@@ -105,7 +109,7 @@ function HowItWorks() {
 
 function WhyTapr() {
   return (
-    <section className="max-w-4xl mx-auto px-6 py-20">
+    <section className="max-w-4xl mx-auto px-6 py-12 md:py-16">
       <div className="text-[#FF6B35] text-xs font-semibold uppercase tracking-[0.2em] text-center mb-3">
         Why tapr
       </div>
@@ -143,7 +147,7 @@ function WhyTapr() {
 
 function FinalCTA() {
   return (
-    <section id="waitlist" className="max-w-2xl mx-auto px-6 py-20 text-center">
+    <section id="waitlist" className="max-w-2xl mx-auto px-6 py-12 md:py-16 text-center">
       <h2 className="font-display text-4xl md:text-5xl text-white mb-4">
         Be first through the door.
       </h2>
