@@ -3,9 +3,14 @@ import type { AthleteProfile } from '@/types/profile'
 import type { GearProduct, GearProductWithReviews } from '@/types/gear'
 import type { Layer2Responses } from '@/types/recommendation'
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+let _client: Anthropic | null = null
+
+function getClient(): Anthropic {
+  if (!_client) {
+    _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  }
+  return _client
+}
 
 export interface PromptArgs {
   profile: AthleteProfile
@@ -17,7 +22,7 @@ export interface PromptArgs {
 }
 
 export function buildRecommendationPrompt(args: PromptArgs): string {
-  const { profile, layer2Responses, products, budgetMin, budgetMax } = args
+  const { profile, layer2Responses, products, budgetMin, budgetMax, categorySlug } = args
 
   const age = profile.date_of_birth
     ? Math.floor((Date.now() - new Date(profile.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
@@ -75,6 +80,12 @@ ${ownedGearSection}
 BUDGET RANGE: $${budgetMin} — ${budgetMax >= 999999 ? 'no upper limit' : `$${budgetMax}`}
 ${budgetMax >= 999999 ? 'The athlete has no upper budget constraint — recommend the best option for their profile regardless of price.' : 'This is a hard constraint. Only recommend products within this range.'}
 
+BUDGET STYLE: "${profile.budget_style}"
+Interpret this as how aggressively to justify premiums — NOT as a directive to minimize price.
+- "Value-focused": cost-efficiency matters; every premium needs clear, specific justification
+- "Mid-range / price-conscious": maximize value per dollar within the stated range. Do NOT default to the cheaper option. When two products both pass all hard disqualifiers and both fit within budget, prefer the better-suited product even at a $100–200 premium if the benefit is meaningful. Never recommend a product that barely clears a hard disqualifier threshold when a better option exists within budget.
+- "Performance-first" or "No real limits": price within the stated range is not a factor — recommend the best match regardless of cost
+${buildHardDisqualifiers(profile, layer2Responses as Record<string, unknown>, categorySlug)}
 AVAILABLE PRODUCTS:
 ${JSON.stringify(products.slice(0, 20).map(stripProductForPrompt), null, 2)}
 
@@ -196,6 +207,117 @@ function stripProductForPrompt(product: GearProductWithReviews): object {
   return { ...productRest, review_sources: cleanedSources }
 }
 
+/**
+ * Derives hard disqualifier rules from Layer 2 answers + athlete profile.
+ * Returns a prompt section injected before any scoring instructions.
+ * Rules here are NON-NEGOTIABLE — they convert stated requirements into
+ * explicit exclusions Claude must apply before evaluating any product.
+ */
+function buildHardDisqualifiers(
+  profile: AthleteProfile,
+  layer2Responses: Record<string, unknown>,
+  categorySlug: string
+): string {
+  const rules: string[] = []
+
+  const isTriathlete = (profile.race_distances ?? []).some((d) =>
+    ['Sprint', 'Olympic', '70.3 Half Ironman', 'Full Ironman'].some((t) =>
+      (d as string).toLowerCase().includes(t.toLowerCase())
+    )
+  )
+
+  if (categorySlug === 'gps-watches') {
+    // Triathlon mode — only a hard requirement when athlete is actually racing triathlon
+    const needsTri =
+      typeof layer2Responses.triathlon_mode === 'string' &&
+      layer2Responses.triathlon_mode.startsWith('Yes')
+    if (needsTri && isTriathlete) {
+      rules.push(
+        'TRIATHLON MODE REQUIRED: This athlete explicitly stated they need triathlon mode (swim → bike → run multi-sport sequencing). Any watch that does not support dedicated triathlon/multi-sport mode is INELIGIBLE to be topPick or comparison winner. Check specs and review content — if support is ambiguous, treat the product as ineligible.'
+      )
+    }
+
+    // Battery — Ironman
+    const longestEvent =
+      typeof layer2Responses.longest_event === 'string' ? layer2Responses.longest_event : ''
+    if (longestEvent.includes('Full Ironman') || longestEvent.includes('10–17')) {
+      rules.push(
+        'BATTERY MINIMUM (IRONMAN): This athlete races Full Ironman distances (10–17 hours). Any watch with GPS battery life under 20 hours is INELIGIBLE as topPick or comparison winner.'
+      )
+    } else if (longestEvent.includes('70.3') || longestEvent.includes('4–8')) {
+      rules.push(
+        'BATTERY MINIMUM (70.3): This athlete races 70.3 distances (4–8 hours). Any watch with GPS battery life under 10 hours is INELIGIBLE as topPick or comparison winner.'
+      )
+    }
+
+    // Dedicated sports watch
+    const watchType =
+      typeof layer2Responses.watch_type === 'string' ? layer2Responses.watch_type : ''
+    if (watchType.toLowerCase().includes('dedicated sports') || watchType.toLowerCase().includes('triathlon watch')) {
+      rules.push(
+        'WATCH TYPE: This athlete requires a dedicated sports/triathlon watch. Consumer lifestyle watches (Apple Watch non-Ultra, fashion-oriented wearables, basic fitness trackers) are INELIGIBLE.'
+      )
+    }
+  }
+
+  if (categorySlug === 'wetsuits') {
+    // Cold water thermal protection
+    const waterTemp =
+      typeof layer2Responses.water_temp === 'string' ? layer2Responses.water_temp : ''
+    if (waterTemp.includes('Below 60°F') || waterTemp.includes('very cold')) {
+      rules.push(
+        'THERMAL PROTECTION REQUIRED: This athlete is racing in water below 60°F where hypothermia is a real risk. Wetsuits with thin neoprene (<4mm core panels), suits marketed primarily for flexibility in warm water, or suits without substantial thermal insulation are INELIGIBLE as topPick or comparison winner.'
+      )
+    }
+
+    // Full sleeve required
+    const sleevePreference =
+      typeof layer2Responses.sleeve_preference === 'string' ? layer2Responses.sleeve_preference : ''
+    if (sleevePreference.startsWith('Full sleeve')) {
+      rules.push(
+        'FULL SLEEVE REQUIRED: This athlete explicitly requires a full-sleeve wetsuit. Sleeveless wetsuits are INELIGIBLE as topPick or comparison winner.'
+      )
+    }
+
+    // Wetsuit prohibited by race
+    const wetsuitPermitted =
+      typeof layer2Responses.wetsuit_permitted === 'string' ? layer2Responses.wetsuit_permitted : ''
+    if (wetsuitPermitted.toLowerCase().includes('no') && wetsuitPermitted.toLowerCase().includes('prohibit')) {
+      rules.push(
+        'WETSUIT PROHIBITED: This athlete\'s race does not permit wetsuits. Do not recommend any wetsuit. Explain this in your response instead of providing a normal recommendation.'
+      )
+    }
+  }
+
+  // Brand preference: ecosystem ownership is a strong signal — not a tiebreaker
+  const brandPref = typeof layer2Responses.brand_preference === 'string' ? layer2Responses.brand_preference : ''
+  const isEcosystemClaim =
+    brandPref.toLowerCase().includes('ecosystem') ||
+    brandPref.toLowerCase().includes('already in') ||
+    brandPref.toLowerCase().includes('already use')
+  const ECOSYSTEM_BRANDS: Record<string, string> = {
+    garmin: 'Garmin', suunto: 'Suunto', polar: 'Polar', coros: 'COROS',
+    apple: 'Apple', blueseventy: 'Blueseventy', orca: 'Orca', zone3: 'Zone3',
+  }
+  const matchedBrand = Object.entries(ECOSYSTEM_BRANDS).find(([key]) => brandPref.toLowerCase().includes(key))
+
+  if (isEcosystemClaim && matchedBrand) {
+    const [, brandName] = matchedBrand
+    rules.push(
+      `BRAND PREFERENCE (ECOSYSTEM): This athlete stated a preference for ${brandName} and cited existing ecosystem ownership as the reason. ${brandName} products are strongly preferred. Only recommend a non-${brandName} product if: (1) no ${brandName} product in the pool passes all hard disqualifiers above, OR (2) the best ${brandName} option has a specific, named critical weakness for this athlete's primary stated requirements. A competitor having marginally better recovery metrics, slightly more battery life, or a better overall review score does NOT override a stated ecosystem preference — those advantages must be substantial and directly relevant to a stated requirement. When recommending ${brandName}, you may note where competitors excel, but ${brandName} wins the tie.`
+    )
+  }
+
+  if (rules.length === 0) return ''
+
+  return `
+HARD DISQUALIFIERS — APPLY BEFORE ANY SCORING:
+The following rules are derived from this athlete's stated non-negotiable requirements. Products that violate any rule below are INELIGIBLE to be topPick or comparison winner, regardless of scores, price, or general quality. Apply these first, then rank among remaining eligible products.
+
+${rules.map((r, i) => `${i + 1}. ${r}`).join('\n\n')}
+`
+}
+
 // Tells Claude which dimensions are relevant evidence per category.
 // Add new entries as categories launch — no other code changes needed.
 const CATEGORY_SCORE_DIMENSIONS: Record<string, string[]> = {
@@ -214,10 +336,12 @@ export interface ComparisonPromptArgs {
   externalProducts: string[] // 0-2 free-text product names (not in DB)
   categorySlug: string
   originalTopPickId?: string // from recommendation context, if available
+  budgetMin?: number // from category_responses, if available
+  budgetMax?: number // from category_responses, if available
 }
 
 export function buildComparisonPrompt(args: ComparisonPromptArgs): string {
-  const { profile, layer2Responses, dbProducts, externalProducts, categorySlug, originalTopPickId } = args
+  const { profile, layer2Responses, dbProducts, externalProducts, categorySlug, originalTopPickId, budgetMin, budgetMax } = args
 
   const age = profile.date_of_birth
     ? Math.floor((Date.now() - new Date(profile.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
@@ -239,8 +363,16 @@ export function buildComparisonPrompt(args: ComparisonPromptArgs): string {
     ? `\nCATEGORY-SPECIFIC INPUTS (Layer 2):\n${Object.entries(layer2Responses).map(([k, v]) => `- ${k}: ${v}`).join('\n')}\n`
     : ''
 
+  const hardDisqualifiers = layer2Responses && Object.keys(layer2Responses).length > 0
+    ? buildHardDisqualifiers(profile, layer2Responses, categorySlug)
+    : ''
+
   const originalTopPickSection = originalTopPickId
-    ? `\nCONTEXT: Product ${originalTopPickId} was previously recommended for this athlete. The athlete wants to compare it against alternatives. Do not contradict the prior recommendation without specific justification from the review data.\n`
+    ? `\nPRIOR RECOMMENDATION CONTEXT: Product ${originalTopPickId} was selected as the best match for this athlete from the full product catalog, with complete profile and budget context across all available options. The athlete is now doing a head-to-head comparison — a narrower view. Do NOT reverse this verdict unless you can identify a specific, named, data-backed dealbreaker that is directly relevant to this athlete's stated use case. A score advantage or price difference alone is not sufficient to overturn a prior recommendation. If no clear dealbreaker exists, validate the prior recommendation.\n`
+    : ''
+
+  const budgetSection = budgetMin !== undefined && budgetMax !== undefined
+    ? `\nBUDGET CONTEXT: This athlete set a budget of $${budgetMin}–${budgetMax >= 999999 ? 'no upper limit' : `$${budgetMax}`} when they ran their recommendation. Apply this as a soft constraint — note if any product meaningfully exceeds it, but do not disqualify products from comparison analysis based on budget alone.\n`
     : ''
 
   const externalSection = externalProducts.length > 0
@@ -263,7 +395,7 @@ ${locationLine}
 - Existing gear: ${profile.existing_gear?.join(', ') ?? 'none listed'}
 - Racing pattern: ${profile.local_vs_travel ?? 'not specified'}, primarily ${profile.racing_season ?? 'not specified'}
 - Target race: ${profile.target_race_name ?? 'none specified'} on ${profile.target_race_date ?? 'date not set'}
-${layer2Section}${originalTopPickSection}
+${layer2Section}${hardDisqualifiers}${budgetSection}${originalTopPickSection}
 PRODUCTS FROM TAPR DATABASE (with full review data):
 ${JSON.stringify(dbProducts.map(stripProductForPrompt), null, 2)}
 ${externalSection}
@@ -279,7 +411,7 @@ Rules:
 - For external products: cite your knowledge of the product's specifications and reputation
 - profileFitScore (1-10) reflects YOUR profile, not general product quality
 - tradeoffs: 3-5 dimensions where products genuinely differ; mattersForThisAthlete must reflect whether this specific use case is affected
-- cheaperOptionVerdict: if price spread >= $50, give a 2-3 sentence honest verdict on whether the cheaper option is defensible for you; null if spread < $50 or prices unknown
+- cheaperOptionVerdict: if price spread >= $50 AND the cheaper option satisfies all HARD DISQUALIFIERS above, give a 2-3 sentence honest verdict on whether it is defensible for this athlete; if the cheaper option fails any hard disqualifier, set this to null — never use price advantage to promote an ineligible product
 - verdict: name a specific winner — do not hedge
 
 LOCATION RULE:
@@ -342,4 +474,8 @@ Return ONLY valid JSON:
 For sourcesDrawnFrom: include the source_url field from the review_sources data for any DB product sources you cited. For external product sources or sources where no URL is available, omit the url field entirely.`
 }
 
-export { client as anthropic }
+export const anthropic = new Proxy({} as Anthropic, {
+  get(_, prop: string | symbol) {
+    return (getClient() as unknown as Record<string | symbol, unknown>)[prop]
+  },
+})
