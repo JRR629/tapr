@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Bebas_Neue, DM_Sans, JetBrains_Mono } from 'next/font/google'
-import Script from 'next/script'
 import './globals.css'
 
 const bebasNeue = Bebas_Neue({
@@ -34,14 +33,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${bebasNeue.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
-      <body className="bg-[#0A1628] text-white font-sans antialiased">
-        {children}
-        {/* AvantLink ownership verification — remove after verified */}
-        <Script
-          src="http://classic.avantlink.com/affiliate_app_confirm.php?mode=js&authResponse=233a731e18495f5df25943ce251b2a06d2825f52"
-          strategy="afterInteractive"
-        />
-      </body>
+      {/* AvantLink ownership verification — remove after verified */}
+      <head>
+        <script type="text/javascript" src="http://classic.avantlink.com/affiliate_app_confirm.php?mode=js&authResponse=233a731e18495f5df25943ce251b2a06d2825f52" />
+      </head>
+      <body className="bg-[#0A1628] text-white font-sans antialiased">{children}</body>
     </html>
   )
 }
