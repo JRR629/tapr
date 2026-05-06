@@ -33,6 +33,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${bebasNeue.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
+      <head>
+        {/* AvantLink ownership verification — remove after verified */}
+        <script type="text/javascript" src="http://classic.avantlink.com/affiliate_app_confirm.php?mode=js&authResponse=233a731e18495f5df25943ce251b2a06d2825f52"></script>
+      </head>
       <body className="bg-[#0A1628] text-white font-sans antialiased">{children}</body>
     </html>
   )
