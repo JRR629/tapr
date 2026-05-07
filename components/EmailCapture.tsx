@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 
+type Status = 'idle' | 'loading' | 'success' | 'duplicate' | 'error'
+
 export default function EmailCapture() {
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [status, setStatus] = useState<Status>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
@@ -18,6 +20,12 @@ export default function EmailCapture() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
+
+      if (res.status === 409) {
+        setStatus('duplicate')
+        return
+      }
+
       const data = await res.json() as { error?: string }
       if (!res.ok) {
         setErrorMsg(data.error ?? 'Something went wrong.')
@@ -37,6 +45,16 @@ export default function EmailCapture() {
         <div className="text-[#FF6B35] text-2xl mb-2">✓</div>
         <p className="text-white font-semibold text-lg">You&apos;re on the list.</p>
         <p className="text-[#D1D5DB] text-sm mt-1">We&apos;ll email you the moment Tapr goes live.</p>
+      </div>
+    )
+  }
+
+  if (status === 'duplicate') {
+    return (
+      <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg px-8 py-6 text-center max-w-md mx-auto">
+        <div className="text-[#FF6B35] text-2xl mb-2">✓</div>
+        <p className="text-white font-semibold text-lg">You&apos;re already on the list.</p>
+        <p className="text-[#D1D5DB] text-sm mt-1">We&apos;ll email <span className="text-[#FF6B35]">{email}</span> the moment Tapr goes live.</p>
       </div>
     )
   }

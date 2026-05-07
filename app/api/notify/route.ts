@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,18 +23,38 @@ export async function POST(request: Request) {
 
     const { email } = parsed.data
 
+    // Check for duplicate and record signup
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { error: insertError } = await supabase
+      .from('waitlist_signups')
+      .insert({ email })
+
+    if (insertError) {
+      if (insertError.code === '23505') {
+        return Response.json(
+          { code: 'ALREADY_SIGNED_UP' },
+          { status: 409 }
+        )
+      }
+      // DB failure — log but don't block email sending
+      console.error('[notify] waitlist insert failed:', insertError)
+    }
+
     if (!process.env.RESEND_API_KEY) {
-      console.warn('[notify] RESEND_API_KEY not configured')
-      return Response.json({ data: { success: true } }, { status: 200 })
+      console.error('[notify] RESEND_API_KEY not configured')
+      return Response.json(
+        { error: 'Email service not configured.', code: 'EMAIL_NOT_CONFIGURED' },
+        { status: 500 }
+      )
     }
 
     const { Resend } = await import('resend')
     const resend = new Resend(process.env.RESEND_API_KEY)
-    const FROM = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'
-
-    // Save to Resend global contacts
-    await resend.contacts.create({ email, unsubscribed: false })
-      .catch((err) => console.error('[notify] contact save failed:', err))
+    const FROM = process.env.RESEND_FROM_EMAIL!
 
     await Promise.all([
       resend.emails.send({
@@ -48,7 +69,7 @@ export async function POST(request: Request) {
         subject: "You're on the Tapr waitlist",
         html: `
           <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; background: #0A1628; color: #ffffff; padding: 40px 32px; border-radius: 8px;">
-            <div style="color: #FF6B35; font-size: 22px; font-weight: 700; margin-bottom: 24px; letter-spacing: 0.05em;">TAPR</div>
+            <img src="https://www.taprai.com/logo-email.png" alt="Tapr — Gear. Matched. Perfectly." width="200" height="87" style="display:block; margin-bottom: 24px;" />
             <h1 style="font-size: 24px; font-weight: 700; margin: 0 0 16px; color: #ffffff;">You're on the list.</h1>
             <p style="color: #D1D5DB; line-height: 1.6; margin: 0 0 16px;">
               We're putting the finishing touches on Tapr — personalized triathlon gear recommendations grounded in real review data.
