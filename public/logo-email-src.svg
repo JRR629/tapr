@@ -1,0 +1,15 @@
+<svg width="480" height="230" viewBox="100 36 480 230" xmlns="http://www.w3.org/2000/svg">
+  <rect x="100" y="36" width="480" height="230" fill="#0A1628"/>
+
+  <rect x="159" y="56"  width="80" height="154" fill="#FF6B35" rx="4"/>
+  <rect x="253" y="74"  width="80" height="136" fill="#FF6B35" rx="4"/>
+  <rect x="347" y="92"  width="80" height="118" fill="#FF6B35" rx="4"/>
+  <rect x="441" y="110" width="80" height="100" fill="#FF6B35" rx="4"/>
+
+  <text x="199" y="183" font-family="Franklin Gothic Heavy, Franklin Gothic Medium, sans-serif" font-size="68" font-weight="900" fill="#FFFFFF" text-anchor="middle">T</text>
+  <text x="293" y="183" font-family="Franklin Gothic Heavy, Franklin Gothic Medium, sans-serif" font-size="68" font-weight="900" fill="#FFFFFF" text-anchor="middle">a</text>
+  <text x="387" y="183" font-family="Franklin Gothic Heavy, Franklin Gothic Medium, sans-serif" font-size="68" font-weight="900" fill="#FFFFFF" text-anchor="middle">p</text>
+  <text x="481" y="183" font-family="Franklin Gothic Heavy, Franklin Gothic Medium, sans-serif" font-size="68" font-weight="900" fill="#FFFFFF" text-anchor="middle">r</text>
+
+  <text x="340" y="245" font-family="Arial, sans-serif" font-size="22" fill="#FF6B35" letter-spacing="3" text-anchor="middle">GEAR. MATCHED. PERFECTLY.</text>
+</svg>

@@ -24,11 +24,18 @@ export async function POST(request: Request) {
     const { email } = parsed.data
 
     // Check for duplicate and record signup
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('[notify] Supabase env vars missing — URL:', !!supabaseUrl, 'SERVICE_ROLE_KEY:', !!supabaseKey)
+      return Response.json(
+        { error: 'Signup service not configured.', code: 'DB_NOT_CONFIGURED' },
+        { status: 500 }
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
     const { error: insertError } = await supabase
       .from('waitlist_signups')
       .insert({ email })
@@ -40,8 +47,12 @@ export async function POST(request: Request) {
           { status: 409 }
         )
       }
-      // DB failure — log but don't block email sending
-      console.error('[notify] waitlist insert failed:', insertError)
+      // Unexpected DB failure — log details and block to avoid duplicate emails on retry
+      console.error('[notify] waitlist insert failed — code:', insertError.code, '| message:', insertError.message)
+      return Response.json(
+        { error: 'Something went wrong. Please try again.', code: 'DB_ERROR' },
+        { status: 500 }
+      )
     }
 
     if (!process.env.RESEND_API_KEY) {
@@ -69,7 +80,7 @@ export async function POST(request: Request) {
         subject: "You're on the Tapr waitlist",
         html: `
           <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; background: #0A1628; color: #ffffff; padding: 40px 32px; border-radius: 8px;">
-            <img src="https://www.taprai.com/logo-email.png" alt="Tapr — Gear. Matched. Perfectly." width="200" height="87" style="display:block; margin-bottom: 24px;" />
+            <img src="https://www.taprai.com/logo-email.png" alt="Tapr — Gear. Matched. Perfectly." width="360" height="172" style="display:block; margin: 0 auto 32px auto;" />
             <h1 style="font-size: 24px; font-weight: 700; margin: 0 0 16px; color: #ffffff;">You're on the list.</h1>
             <p style="color: #D1D5DB; line-height: 1.6; margin: 0 0 16px;">
               We're putting the finishing touches on Tapr — personalized triathlon gear recommendations grounded in real review data.
