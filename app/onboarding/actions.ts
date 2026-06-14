@@ -6,6 +6,9 @@ import { createClient } from '@/lib/supabase/server'
 
 const profileSchema = z.object({
   race_distances: z.array(z.string()).min(1, 'Select at least one distance'),
+  sports: z.array(z.string()).min(1, 'Select at least one sport'),
+  current_focus_sport: z.string().min(1),
+  current_focus_distance: z.string().optional().nullable(),
   experience_level: z.string().min(1),
   background_sport: z.array(z.string()).min(1, 'Select at least one sport'),
   gender: z.string().min(1),
@@ -66,6 +69,9 @@ export async function saveProfile(raw: unknown): Promise<SaveProfileResult> {
   const { error: profileError } = await supabase.from('athlete_profiles').insert({
     user_id: user.id,
     race_distances: data.race_distances,
+    sports: data.sports,
+    current_focus_sport: data.current_focus_sport,
+    current_focus_distance: data.current_focus_distance ?? null,
     experience_level: data.experience_level,
     background_sport: data.background_sport,
     gender: data.gender,
@@ -102,17 +108,6 @@ export async function saveProfile(raw: unknown): Promise<SaveProfileResult> {
     return { error: 'Failed to save profile. Please try again.' }
   }
 
-  // Create free subscription record
-  const { error: subError } = await supabase.from('subscriptions').insert({
-    user_id: user.id,
-    plan: 'free',
-    status: 'active',
-  })
-
-  if (subError) {
-    // Non-fatal — profile saved, subscription can be created on demand
-    console.error('[saveProfile] subscription insert error:', subError.message)
-  }
 
   redirect('/dashboard')
 }

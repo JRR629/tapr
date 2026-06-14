@@ -1,8 +1,11 @@
 import Link from 'next/link'
+import Image from 'next/image'
+import { Settings } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { getActiveCategories } from '@/lib/gear'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { AdminNavLink } from '@/components/AdminNavLink'
+import { getActiveCategories, getRecentComparisons } from '@/lib/gear'
 import { CategoryGrid } from '@/components/CategoryGrid'
-import type { AthleteProfile } from '@/types/profile'
 
 interface RecommendationRow {
   id: string
@@ -10,6 +13,14 @@ interface RecommendationRow {
   category_id: string
   gear_categories: { name: string; slug: string } | null
   recommendation_json: { topPick?: { productName?: string } } | null
+}
+
+interface RecentComparisonRow {
+  id: string
+  created_at: string
+  winner_product_name: string | null
+  external_products: string[] | null
+  gear_categories: { name: string; slug: string } | null
 }
 
 function formatDate(dateString: string): string {
@@ -35,96 +46,126 @@ export default async function DashboardPage() {
     getActiveCategories(),
   ])
 
-  const period = new Date().toISOString().slice(0, 10)
+  const adminDb = createAdminClient()
 
-  const [recentResult, subscriptionResult, usageResult] = await Promise.all([
+  const [recentResult, recentCompsResult] = await Promise.all([
     user
-      ? supabase
+      ? adminDb
           .from('gear_recommendations')
           .select('id, created_at, category_id, gear_categories(name, slug), recommendation_json')
-          .eq('user_id', user!.id)
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(5)
       : Promise.resolve({ data: null }),
     user
-      ? supabase
-          .from('subscriptions')
-          .select('plan, status')
-          .eq('user_id', user!.id)
-          .single()
-      : Promise.resolve({ data: null }),
-    user
-      ? supabase
-          .from('usage_counters')
-          .select('rec_count')
-          .eq('user_id', user!.id)
-          .eq('period', period)
-          .single()
-      : Promise.resolve({ data: null }),
+      ? getRecentComparisons(user.id)
+      : Promise.resolve([]),
   ])
 
   const recentRecs = (recentResult.data as RecommendationRow[] | null) ?? []
-  const isPro = subscriptionResult.data?.plan === 'pro' && subscriptionResult.data?.status === 'active'
-  const recCount = (usageResult.data as { rec_count: number } | null)?.rec_count ?? 0
-  const dailyLimit = isPro ? null : 3
+  const recentComps = (recentCompsResult as unknown as RecentComparisonRow[]) ?? []
   const firstName = user?.email ? getFirstName(user.email) : 'Athlete'
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
-      {/* Header */}
-      <div className="mb-10">
-        <h1 className="font-display text-5xl md:text-6xl text-white leading-none mb-1">
-          YOUR MATCH AWAITS, {firstName.toUpperCase()}.
-        </h1>
-        <div className="flex items-center gap-3 mt-2 flex-wrap">
-          <p className="text-[#D1D5DB] text-base">What are we finding today?</p>
-          <span className="text-[#1A3A5C]">·</span>
-          {isPro ? (
-            <span className="text-[#22C55E] text-xs font-semibold">Pro · Unlimited recommendations</span>
-          ) : (
-            <span className="text-[#9CA3AF] text-sm">
-              {recCount}/3 recommendations today ·{' '}
-              <Link href="/billing" className="text-[#FF6B35] hover:text-[#E55A24] transition-colors font-semibold">
-                Upgrade to Pro
-              </Link>
-            </span>
-          )}
+    <div
+      className="min-h-screen"
+      style={{ background: 'radial-gradient(ellipse at top, #0F2040 0%, #0A1628 70%)' }}
+    >
+      {/* Hero — logo centered, settings top-right */}
+      <div className="relative flex items-center justify-center pt-14 pb-10 px-6">
+        <Image
+          src="/logo-sidebar.svg"
+          alt="Tapr"
+          width={280}
+          height={143}
+          priority
+          className="w-[220px] sm:w-[280px] h-auto"
+        />
+        <div className="absolute right-6 top-4 md:top-6 flex items-center gap-1">
+          <AdminNavLink />
+          <Link
+            href="/settings"
+            className="text-[#D1D5DB] hover:text-white transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md hover:bg-[#ffffff08]"
+            aria-label="Settings"
+          >
+            <Settings size={20} />
+          </Link>
         </div>
       </div>
 
-      {/* Category grid — the main action */}
-      <CategoryGrid categories={categories} />
+      {/* Greeting */}
+      <div className="text-center px-6 pb-10">
+        <p className="text-[#D1D5DB] text-base">
+          What are you shopping for, <span className="text-white font-semibold">{firstName}</span>?
+        </p>
+        <p className="text-[#9CA3AF] text-xs mt-2">
+          Get an AI recommendation, or compare your shortlist side-by-side.
+        </p>
+      </div>
 
-      {/* Recent recommendations */}
-      {recentRecs.length > 0 && (
-        <div className="mt-12">
-          <h2 className="font-display text-2xl text-white mb-4">RECENT RECOMMENDATIONS</h2>
-          <div className="flex flex-col gap-2">
-            {recentRecs.map((rec) => (
-              <Link
-                key={rec.id}
-                href={`/gear/${rec.gear_categories?.slug ?? rec.category_id}/recommendation?id=${rec.id}`}
-                className="flex items-center justify-between px-4 py-3 rounded-md border border-[#1A3A5C] hover:border-[#FF6B35] hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/20 transition-all duration-200 group"
-              >
-                <div>
-                  <p className="text-white text-sm font-semibold group-hover:text-[#FF6B35] transition-colors">
-                    {rec.gear_categories?.name ?? 'Gear'}
-                    {rec.recommendation_json?.topPick?.productName && (
-                      <span className="text-[#9CA3AF] font-normal"> · Winner: {rec.recommendation_json.topPick.productName}</span>
-                    )}
-                  </p>
-                  <p className="text-[#9CA3AF] text-sm">{formatDate(rec.created_at)}</p>
-                </div>
-                <span className="text-[#6B7280] text-xs group-hover:text-[#FF6B35] transition-colors">View →</span>
-              </Link>
-            ))}
+      {/* Matrix cards */}
+      <div className="max-w-5xl mx-auto px-6 pb-10">
+        <CategoryGrid categories={categories} />
+      </div>
+
+      {/* Recent activity */}
+      <div className="max-w-4xl mx-auto px-6 pb-16">
+        {recentRecs.length > 0 && (
+          <div className="mt-6">
+            <h2 className="font-display text-2xl text-white mb-4">RECENT RECOMMENDATIONS</h2>
+            <div className="flex flex-col gap-2">
+              {recentRecs.map((rec) => (
+                <Link
+                  key={rec.id}
+                  href={`/gear/${rec.gear_categories?.slug ?? rec.category_id}/recommendation?id=${rec.id}`}
+                  className="flex items-center justify-between px-4 py-3 rounded-md border border-[#1A3A5C] hover:border-[#FF6B35] hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/20 transition-all duration-200 group"
+                >
+                  <div>
+                    <p className="text-white text-sm font-semibold group-hover:text-[#FF6B35] transition-colors">
+                      {rec.gear_categories?.name ?? 'Gear'}
+                      {rec.recommendation_json?.topPick?.productName && (
+                        <span className="text-[#9CA3AF] font-normal"> · {rec.recommendation_json.topPick.productName}</span>
+                      )}
+                    </p>
+                    <p className="text-[#9CA3AF] text-sm">{formatDate(rec.created_at)}</p>
+                  </div>
+                  <span className="text-[#6B7280] text-xs group-hover:text-[#FF6B35] transition-colors">View →</span>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <footer className="text-center text-[#6B7280] text-xs py-6 border-t border-[#1A3A5C] mt-12">
-        Tapr earns a commission on purchases made through our links. This never influences our recommendations.
-      </footer>
+        {recentComps.length > 0 && (
+          <div className="mt-10">
+            <h2 className="font-display text-2xl text-white mb-4">RECENT COMPARISONS</h2>
+            <div className="flex flex-col gap-2">
+              {recentComps.map((comp) => (
+                <Link
+                  key={comp.id}
+                  href={`/gear/${comp.gear_categories?.slug}/compare?id=${comp.id}`}
+                  className="flex items-center justify-between px-4 py-3 rounded-md border border-[#1A3A5C] hover:border-[#FF6B35] hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/20 transition-all duration-200 group"
+                >
+                  <div>
+                    <p className="text-white text-sm font-semibold group-hover:text-[#FF6B35] transition-colors">
+                      {comp.gear_categories?.name ?? 'Gear'}
+                      {comp.winner_product_name && (
+                        <span className="text-[#9CA3AF] font-normal"> · Winner: {comp.winner_product_name}</span>
+                      )}
+                    </p>
+                    <p className="text-[#9CA3AF] text-sm">{formatDate(comp.created_at)}</p>
+                  </div>
+                  <span className="text-[#6B7280] text-xs group-hover:text-[#FF6B35] transition-colors">View →</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-12 pt-6 border-t border-[#1A3A5C] text-center text-[#6B7280] text-xs">
+          Tapr earns a commission on purchases made through our links. This never influences our recommendations.
+        </div>
+      </div>
     </div>
   )
 }

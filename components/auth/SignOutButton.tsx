@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface SignOutButtonProps {
@@ -24,9 +25,10 @@ export default function SignOutButton({ className }: SignOutButtonProps) {
     <button
       onClick={handleSignOut}
       disabled={isLoading}
-      className={`min-h-[44px] text-[#6B7280] hover:text-[#FF6B35] transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed ${className ?? ''}`}
+      className={`flex items-center gap-3 min-h-[44px] text-[#6B7280] hover:text-[#EF4444] transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed ${className ?? ''}`}
     >
-      {isLoading ? 'Signing out...' : 'Sign Out'}
+      <LogOut size={16} className="flex-shrink-0" />
+      <span>{isLoading ? 'Signing out…' : 'Sign Out'}</span>
     </button>
   )
 }

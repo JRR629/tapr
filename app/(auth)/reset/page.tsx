@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 
 export default function ResetPage() {
   const [email, setEmail] = useState('')
@@ -15,13 +15,16 @@ export default function ResetPage() {
     setError(null)
     setIsLoading(true)
 
-    const supabase = createClient()
-    const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/profile`,
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     })
 
-    if (authError) {
-      setError(authError.message)
+    const json = await res.json() as { error?: string; data?: { sent: boolean } }
+
+    if (!res.ok) {
+      setError(json.error ?? 'Failed to send reset email')
       setIsLoading(false)
       return
     }
@@ -49,8 +52,14 @@ export default function ResetPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <span className="font-display text-4xl text-[#FF6B35] tracking-wider">TRIKIT AI</span>
+        <div className="flex flex-col items-center mb-10">
+          <Image
+            src="/logo-sidebar.svg"
+            alt="Tapr"
+            width={200}
+            height={102}
+            priority
+          />
         </div>
 
         <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-8">

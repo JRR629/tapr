@@ -8,7 +8,7 @@ interface CategoryTabBarProps {
   categoryName: string
 }
 
-export function CategoryTabBar({ categorySlug, categoryName }: CategoryTabBarProps) {
+export function CategoryTabBar({ categorySlug, categoryName: _categoryName }: CategoryTabBarProps) {
   const pathname = usePathname()
 
   const isCompare = pathname.startsWith(`/gear/${categorySlug}/compare`)

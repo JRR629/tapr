@@ -53,9 +53,8 @@ export function useComparison() {
           // ignore parse error
         }
 
-        // Surface PRO_REQUIRED as a sentinel so the UI can render ProGate
-        if (errorCode === 'PRO_REQUIRED') {
-          throw new Error('PRO_REQUIRED')
+        if (errorCode === 'INSUFFICIENT_CREDITS') {
+          throw new Error('INSUFFICIENT_CREDITS')
         }
 
         throw new Error(errorMessage)

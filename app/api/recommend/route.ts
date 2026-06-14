@@ -1,10 +1,12 @@
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getProductsWithReviewsForRecommendation } from '@/lib/gear'
-import { anthropic, buildRecommendationPrompt } from '@/lib/anthropic'
+import { getProductsWithReviewsForRecommendation, getNutritionProductsForRecommendation, getRunningShoeProductsForRecommendation } from '@/lib/gear'
+import { anthropic, buildRecommendationPrompt, buildNutritionPrompt, filterNutritionProductsForPrompt, buildRunningShoePrompt, filterRunningShoeProductsForPrompt, debugComputeShoeFilterInfo } from '@/lib/anthropic'
+import { resolveProductImageUrl } from '@/lib/storage'
+import type { NutritionProductWithMentions, RunningShoeProductWithMentions } from '@/types/gear'
 import type { AthleteProfile } from '@/types/profile'
-import type { RecommendationResult } from '@/types/recommendation'
+import type { RecommendationResult, NutritionResult, RunningShoeResult } from '@/types/recommendation'
 
 const bodySchema = z.object({
   categorySlug: z.string().min(1),
@@ -33,6 +35,16 @@ export async function POST(request: Request) {
 
     const { categorySlug, layer2Responses, budgetMin, budgetMax } = parsed.data
 
+    // Debug instrumentation: capture detailed state when ?debug=1
+    const debug = new URL(request.url).searchParams.get('debug') === '1'
+    let debugBundle: Record<string, unknown> | null = debug ? { startedAt: new Date().toISOString() } : null
+    if (debugBundle) {
+      debugBundle.categorySlug = categorySlug
+      debugBundle.layer2 = layer2Responses
+      debugBundle.budgetMin = budgetMin
+      debugBundle.budgetMax = budgetMax
+    }
+
     // 2. Auth check
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -40,55 +52,25 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Authentication required', code: 'UNAUTHENTICATED' }, { status: 401 })
     }
 
-    // 3. Check subscription and monthly usage limit
-    const period = new Date().toISOString().slice(0, 10) // 'YYYY-MM-DD'
-
-    const [subscriptionResult, usageResult] = await Promise.all([
-      supabase
-        .from('subscriptions')
-        .select('plan, status')
-        .eq('user_id', user.id)
-        .single(),
-      supabase
-        .from('usage_counters')
-        .select('rec_count')
-        .eq('user_id', user.id)
-        .eq('period', period)
-        .single(),
-    ])
-
-    const isPro = subscriptionResult.data?.plan === 'pro' && subscriptionResult.data?.status === 'active'
-    const recCount = usageResult.data?.rec_count ?? 0
-
-    if (!isPro) {
-      // Daily cap: 3 per day
-      if (recCount >= 3) {
-        return Response.json(
-          { error: 'You\'ve used all 3 free recommendations today. Upgrade to Pro for unlimited.', code: 'RATE_LIMITED' },
-          { status: 429 }
-        )
-      }
-      // Monthly hard cap: 30 per calendar month (abuse/bot protection)
-      const monthPeriod = new Date().toISOString().slice(0, 7) // 'YYYY-MM'
-      const { data: monthlyRows } = await supabase
-        .from('usage_counters')
-        .select('rec_count')
-        .eq('user_id', user.id)
-        .like('period', `${monthPeriod}-%`)
-      const monthlyTotal = (monthlyRows ?? []).reduce((sum, row) => sum + (row.rec_count ?? 0), 0)
-      if (monthlyTotal >= 30) {
-        return Response.json(
-          { error: 'You\'ve reached your 30 free recommendations this month. Upgrade to Pro for unlimited.', code: 'RATE_LIMITED' },
-          { status: 429 }
-        )
-      }
+    // 3. Check and deduct 1 credit (atomic — must happen before Claude call)
+    const adminDb = createAdminClient()
+    const { data: deducted, error: deductErr } = await adminDb.rpc('deduct_credits', {
+      p_user_id: user.id,
+      p_amount: 1,
+      p_reason: 'recommendation',
+    })
+    if (deductErr || !deducted) {
+      return Response.json(
+        { error: "You've used all your credits. Buy a credit pack to continue.", code: 'INSUFFICIENT_CREDITS' },
+        { status: 402 }
+      )
     }
 
     // 4. Fetch athlete profile
     const { data: profile, error: profileError } = await supabase
       .from('athlete_profiles')
       .select(
-        'id, user_id, race_distances, experience_level, background_sport, gender, date_of_birth, city, state, height_feet, height_inches, weight_lbs, budget_style, fit_issues, existing_gear, local_vs_travel, racing_season, target_race_name, target_race_date, race_id, inseam_inches, torso_length_inches, arm_length_inches, arm_span_inches, shoulder_width_inches, chest_circumference_inches, hip_circumference_inches, neck_circumference_inches, flexibility_level, current_bike, foot_width, arch_type, created_at, updated_at'
+        'id, user_id, sports, current_focus_sport, country, race_distances, experience_level, background_sport, gender, date_of_birth, city, state, height_feet, height_inches, weight_lbs, budget_style, fit_issues, existing_gear, local_vs_travel, racing_season, target_race_name, target_race_date, race_id, inseam_inches, torso_length_inches, arm_length_inches, arm_span_inches, shoulder_width_inches, chest_circumference_inches, hip_circumference_inches, neck_circumference_inches, flexibility_level, current_bike, foot_width, arch_type, created_at, updated_at'
       )
       .eq('user_id', user.id)
       .single()
@@ -97,9 +79,38 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Athlete profile not found. Please complete your profile first.', code: 'PROFILE_NOT_FOUND' }, { status: 400 })
     }
 
-    // 5. Fetch active products in budget range
-    const products = await getProductsWithReviewsForRecommendation(categorySlug, budgetMin, budgetMax)
-    if (products.length === 0) {
+    if (debugBundle) {
+      debugBundle.profile = profile
+    }
+
+    // 5. Fetch active products — each category pattern uses its own fetcher:
+    //   - nutrition:      product_review_mentions, nutrition-specific score columns
+    //   - running-shoes:  product_review_mentions, 9 shoe-specific score columns
+    //   - all others:     review_sources (wetsuit-style pattern)
+    const isNutrition    = categorySlug === 'nutrition'
+    const isRunningShoes = categorySlug === 'running-shoes'
+
+    const nutritionProducts: NutritionProductWithMentions[] = isNutrition
+      ? await getNutritionProductsForRecommendation(categorySlug)
+      : []
+    const shoeProducts: RunningShoeProductWithMentions[] = isRunningShoes
+      ? await getRunningShoeProductsForRecommendation(categorySlug)
+      : []
+    const products = (!isNutrition && !isRunningShoes)
+      ? await getProductsWithReviewsForRecommendation(categorySlug, budgetMin, budgetMax)
+      : []
+
+    // Capture shoe filter diagnostics before filtering (running-shoes only)
+    if (debugBundle && isRunningShoes && shoeProducts.length > 0) {
+      debugBundle.shoeFilterInfo = debugComputeShoeFilterInfo(
+        shoeProducts,
+        layer2Responses as Record<string, unknown>,
+        profile as AthleteProfile
+      )
+    }
+
+    const activeProducts = isNutrition ? nutritionProducts : isRunningShoes ? shoeProducts : products
+    if (activeProducts.length === 0) {
       return Response.json(
         { error: 'No products found in this category within your budget range.', code: 'NO_PRODUCTS' },
         { status: 400 }
@@ -117,22 +128,52 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Category not found', code: 'NOT_FOUND' }, { status: 400 })
     }
 
-    // 7. Build prompt
-    const prompt = buildRecommendationPrompt({
-      profile: profile as AthleteProfile,
-      layer2Responses: layer2Responses as Record<string, string | string[] | number | boolean>,
-      products,
-      budgetMin,
-      budgetMax,
-      categorySlug,
-    })
+    // 7. Build prompt — each category pattern has its own builder
+    const filteredNutritionProducts = isNutrition
+      ? filterNutritionProductsForPrompt(nutritionProducts, layer2Responses as Record<string, unknown>)
+      : []
+    const filteredShoeProducts = isRunningShoes
+      ? filterRunningShoeProductsForPrompt(shoeProducts, layer2Responses as Record<string, unknown>, profile as AthleteProfile, budgetMin, budgetMax)
+      : []
+
+    const prompt = isNutrition
+      ? buildNutritionPrompt({
+          profile: profile as AthleteProfile,
+          layer2Responses: layer2Responses as Record<string, string | string[] | number | boolean>,
+          products: filteredNutritionProducts,
+          budgetMin,
+          budgetMax,
+          categorySlug,
+        })
+      : isRunningShoes
+        ? buildRunningShoePrompt({
+            profile: profile as AthleteProfile,
+            layer2Responses: layer2Responses as Record<string, string | string[] | number | boolean>,
+            products: filteredShoeProducts,
+            budgetMin,
+            budgetMax,
+          })
+        : buildRecommendationPrompt({
+            profile: profile as AthleteProfile,
+            layer2Responses: layer2Responses as Record<string, string | string[] | number | boolean>,
+            products,
+            budgetMin,
+            budgetMax,
+            categorySlug,
+          })
+
+    if (debugBundle) {
+      debugBundle.promptLength = prompt.length
+      debugBundle.promptPreview = prompt.slice(0, 2000)
+      debugBundle.promptFull = prompt
+    }
 
     // 8. Call Anthropic with streaming
     let streamResponse: ReturnType<typeof anthropic.messages.stream>
     try {
       streamResponse = anthropic.messages.stream({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2048,
+        model: 'claude-sonnet-4-6',
+        max_tokens: (categorySlug === 'nutrition' || categorySlug === 'running-shoes') ? 4096 : 2048,
         messages: [{ role: 'user', content: prompt }],
       })
     } catch (err) {
@@ -168,18 +209,67 @@ export async function POST(request: Request) {
           return
         }
 
-        // Append URL map built from products review sources — more reliable than
+        if (debugBundle) {
+          debugBundle.claudeRawResponse = accumulatedText
+        }
+
+        // Append URL map built from product review data — more reliable than
         // asking Claude to extract URLs from its own output
         const sourceUrlMap: Record<string, string> = {}
-        for (const product of products) {
-          for (const source of (product.review_sources ?? [])) {
-            if (source.source_name && source.source_url) {
-              sourceUrlMap[source.source_name] = source.source_url
+        if (isNutrition) {
+          for (const product of nutritionProducts) {
+            for (const mention of (product.product_review_mentions ?? [])) {
+              const name = mention.review_articles?.source_name
+              const url = mention.review_articles?.url
+              if (name && url) sourceUrlMap[name] = url
+            }
+          }
+        } else if (isRunningShoes) {
+          for (const product of shoeProducts) {
+            for (const mention of (product.product_review_mentions ?? [])) {
+              const name = mention.review_articles?.source_name
+              const url = mention.review_articles?.url
+              if (name && url) sourceUrlMap[name] = url
+            }
+          }
+        } else {
+          for (const product of products) {
+            for (const source of (product.review_sources ?? [])) {
+              if (source.source_name && source.source_url) {
+                sourceUrlMap[source.source_name] = source.source_url
+              }
             }
           }
         }
         if (Object.keys(sourceUrlMap).length > 0) {
           controller.enqueue(encoder.encode(`\n__SOURCE_URLS__:${JSON.stringify(sourceUrlMap)}`))
+        }
+
+        // Build image map: productId → resolved image URL
+        // This is injected server-side so the card never needs to know about
+        // image_path, amazon_asin, or affiliate logic.
+        const imageMap: Record<string, string> = {}
+        if (isRunningShoes) {
+          for (const product of shoeProducts) {
+            const url = resolveProductImageUrl({
+              imagePath: product.image_path,
+              categorySlug: 'running-shoes',
+              amazonImageUrl: (product as RunningShoeProductWithMentions & { amazon_image_url?: string | null }).amazon_image_url,
+            })
+            if (url) imageMap[product.id] = url
+          }
+        } else if (!isNutrition) {
+          // GPS watches, wetsuits, and other non-nutrition categories
+          for (const product of products) {
+            const url = resolveProductImageUrl({
+              imagePath: product.image_path,
+              categorySlug,
+            })
+            if (url) imageMap[product.id] = url
+          }
+        }
+        if (Object.keys(imageMap).length > 0) {
+          controller.enqueue(encoder.encode(`\n__IMAGE_MAP__:${JSON.stringify(imageMap)}`))
         }
 
         controller.close()
@@ -188,28 +278,137 @@ export async function POST(request: Request) {
         void (async () => {
           try {
             // Parse Claude response
-            let result: RecommendationResult
+            let result: RecommendationResult | NutritionResult | RunningShoeResult
             try {
-              // Strip URL map sentinel and markdown code fences if present
-              const stripped = accumulatedText.replace(/\n__SOURCE_URLS__:\{.*\}$/, '')
-              const jsonText = stripped.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-              result = JSON.parse(jsonText) as RecommendationResult
+              // Strip both server-injected sentinels and markdown code fences
+              const stripped = accumulatedText
+                .replace(/\n__IMAGE_MAP__:\{.*\}$/, '')
+                .replace(/\n__SOURCE_URLS__:\{.*\}$/, '')
+              let jsonText = stripped.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+              // Robustly find the outermost JSON object — handles extra prose or partial wrapping
+              const jStart = jsonText.indexOf('{')
+              const jEnd = jsonText.lastIndexOf('}')
+              if (jStart !== -1 && jEnd > jStart) jsonText = jsonText.slice(jStart, jEnd + 1)
+              result = JSON.parse(jsonText) as RecommendationResult | NutritionResult | RunningShoeResult
+              if (debugBundle) {
+                debugBundle.parseSucceeded = true
+              }
             } catch (parseErr) {
               console.error('[recommend] failed to parse Claude response:', parseErr)
+              if (debugBundle) {
+                debugBundle.parseSucceeded = false
+                debugBundle.parseError = String(parseErr)
+              }
+              // Dump the raw text to /tmp so we can diagnose the malformed JSON
+              // without re-running the recommendation. Server-only path, so leaking
+              // to /tmp is fine in dev.
+              try {
+                const fs = await import('fs/promises')
+                const ts = new Date().toISOString().replace(/[:.]/g, '-')
+                const dumpPath = `/tmp/tapr-bad-recommendation-${ts}.txt`
+                await fs.writeFile(dumpPath, accumulatedText, 'utf8')
+                console.error(`[recommend] raw Claude output dumped to: ${dumpPath}`)
+              } catch (dumpErr) {
+                console.error('[recommend] could not dump bad response:', dumpErr)
+              }
               return
             }
 
+            // Validate all product IDs — hallucinated IDs cause silent UI failures
+            // (the card shows Claude's productName text while links/compare use the wrong UUID).
+            if (isRunningShoes) {
+              const shoeResult = result as RunningShoeResult
+              const validIds = new Set(shoeProducts.map(p => p.id))
+              const resultIds = [
+                shoeResult.primaryPick?.productId,
+                shoeResult.alternatives?.safer?.productId,
+                shoeResult.alternatives?.faster?.productId,
+                shoeResult.alternatives?.value?.productId,
+              ].filter(Boolean) as string[]
+              const hallucinated = resultIds.filter(id => !validIds.has(id))
+              if (hallucinated.length > 0) {
+                console.error('[recommend] hallucinated shoe productId(s):', hallucinated, '— recommendation saved but may render incorrectly')
+              }
+            } else if (!isNutrition) {
+              const genericResult = result as RecommendationResult
+              const validIds = new Set(products.map((p: { id: string }) => p.id))
+              const resultIds = [
+                genericResult.topPick?.productId,
+                genericResult.runnerUp?.productId,
+                genericResult.upgradeOption?.productId,
+              ].filter(Boolean) as string[]
+              const hallucinated = resultIds.filter(id => !validIds.has(id))
+              if (hallucinated.length > 0) {
+                console.error('[recommend] hallucinated generic productId(s):', categorySlug, hallucinated, '— recommendation saved but may render incorrectly')
+              }
+            }
+
+            // Inject server-resolved imageUrls into pick objects BEFORE saving to
+            // DB. Without this, saved recommendations (loaded via ?id=) would
+            // never show product images — only live-streamed ones would, because
+            // the hook only injects in-memory on the live stream. Same logic as
+            // the hook's injectImage, but server-side and pre-persist.
+            if (Object.keys(imageMap).length > 0) {
+              const inject = <T extends { productId?: string | null; imageUrl?: string | null }>(pick: T | null | undefined) => {
+                if (!pick || !pick.productId) return
+                const url = imageMap[pick.productId]
+                if (url) pick.imageUrl = url
+              }
+              if (isRunningShoes) {
+                const shoe = result as RunningShoeResult
+                inject(shoe.primaryPick)
+                inject(shoe.alternatives?.safer)
+                inject(shoe.alternatives?.faster)
+                inject(shoe.alternatives?.value)
+                if (shoe.rotationSuggestion?.pairing) {
+                  inject(shoe.rotationSuggestion.pairing.everyday)
+                  inject(shoe.rotationSuggestion.pairing.raceDay)
+                }
+              } else if (!isNutrition) {
+                const generic = result as RecommendationResult
+                inject(generic.topPick)
+                inject(generic.runnerUp)
+                inject(generic.upgradeOption)
+              }
+            }
+
             // Save recommendation — use service-role client to bypass RLS on insert
-            const adminDb = createAdminClient()
             const recId = request.headers.get('X-Recommendation-Id') ?? crypto.randomUUID()
+
+            let topPickId: string | null = null
+            let runnerUpId: string | null = null
+
+            if (isNutrition) {
+              const nutritionResult = result as NutritionResult
+              topPickId = 'bikeOptions' in nutritionResult
+                ? (nutritionResult.bikeOptions[0]?.productId ?? null)
+                : 'viableOptions' in nutritionResult
+                  ? (nutritionResult.viableOptions[0]?.productId ?? null)
+                  : null
+              runnerUpId = 'runOptions' in nutritionResult
+                ? (nutritionResult.runOptions[0]?.productId ?? null)
+                : 'viableOptions' in nutritionResult
+                  ? ((nutritionResult as { viableOptions: Array<{ productId: string | null }> }).viableOptions[1]?.productId ?? null)
+                  : null
+            } else if (isRunningShoes) {
+              const shoeResult = result as RunningShoeResult
+              // primaryPick = top_pick_product_id; alternatives.safer = runner_up_product_id (most conservative choice)
+              topPickId = shoeResult.primaryPick?.productId ?? null
+              runnerUpId = shoeResult.alternatives?.safer?.productId ?? null
+            } else {
+              const genericResult = result as RecommendationResult
+              topPickId = genericResult.topPick?.productId ?? null
+              runnerUpId = genericResult.runnerUp?.productId ?? null
+            }
+
             const { data: savedRec, error: recError } = await adminDb
               .from('gear_recommendations')
               .insert({
                 id: recId,
                 user_id: user.id,
                 category_id: category.id,
-                top_pick_product_id: result.topPick?.productId ?? null,
-                runner_up_product_id: result.runnerUp?.productId ?? null,
+                top_pick_product_id: topPickId,
+                runner_up_product_id: runnerUpId,
                 recommendation_json: result,
                 profile_snapshot: profile,
               })
@@ -237,26 +436,21 @@ export async function POST(request: Request) {
               console.error('[recommend] failed to save category responses:', responseError.message)
             }
 
-            // Increment monthly usage counter
-            const { error: usageError } = await adminDb.rpc('increment_usage_counter', {
-              p_user_id: user.id,
-              p_period: period,
-              p_rec_count: 1,
-              p_comp_count: 0,
-            })
-
-            if (usageError) {
-              // Fallback: read-then-write
-              const current = usageResult.data?.rec_count ?? 0
-              await adminDb
-                .from('usage_counters')
-                .upsert(
-                  { user_id: user.id, period, rec_count: current + 1, comp_count: 0, updated_at: new Date().toISOString() },
-                  { onConflict: 'user_id,period' }
-                )
-            }
           } catch (bgErr) {
             console.error('[recommend] background save error:', bgErr)
+          }
+
+          // Write debug bundle to disk if debug mode is enabled
+          if (debugBundle) {
+            try {
+              const fs = await import('fs/promises')
+              const ts = new Date().toISOString().replace(/[:.]/g, '-')
+              const debugPath = `/tmp/tapr-debug-${ts}.json`
+              await fs.writeFile(debugPath, JSON.stringify(debugBundle, null, 2), 'utf8')
+              console.log(`[recommend] debug dump → ${debugPath}`)
+            } catch (e) {
+              console.error('[recommend] debug dump failed:', e)
+            }
           }
         })()
       },

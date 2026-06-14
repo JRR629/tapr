@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -97,9 +98,15 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-10">
-          <span className="font-display text-4xl text-[#FF6B35] tracking-wider">TAPR</span>
-          <p className="text-[#6B7280] text-sm mt-1">Stop Guessing. Start Racing.</p>
+        <div className="flex flex-col items-center mb-10">
+          <Image
+            src="/logo-sidebar.svg"
+            alt="Tapr"
+            width={200}
+            height={102}
+            priority
+          />
+          <p className="text-[#6B7280] text-sm mt-3">Stop Guessing. Start Racing.</p>
         </div>
 
         {/* Card */}

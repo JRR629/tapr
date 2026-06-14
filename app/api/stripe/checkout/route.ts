@@ -1,7 +1,18 @@
+import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { stripe } from '@/lib/stripe'
 
-export async function POST() {
+const bodySchema = z.object({
+  pack: z.enum(['3', '10', '25']),
+})
+
+const PACK_PRICE_IDS: Record<string, string> = {
+  '3': process.env.STRIPE_CREDITS_3_PRICE_ID!,
+  '10': process.env.STRIPE_CREDITS_10_PRICE_ID!,
+  '25': process.env.STRIPE_CREDITS_25_PRICE_ID!,
+}
+
+export async function POST(request: Request) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -9,48 +20,39 @@ export async function POST() {
       return Response.json({ error: 'Authentication required', code: 'UNAUTHENTICATED' }, { status: 401 })
     }
 
-    const { data: sub } = await supabase
-      .from('subscriptions')
-      .select('stripe_customer_id, plan')
-      .eq('user_id', user.id)
-      .single()
-
-    if (sub?.plan === 'pro') {
-      return Response.json({ error: 'Already subscribed to Pro', code: 'ALREADY_PRO' }, { status: 400 })
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return Response.json({ error: 'Invalid JSON body', code: 'BAD_REQUEST' }, { status: 400 })
     }
 
-    let customerId = sub?.stripe_customer_id ?? null
-
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: { supabase_user_id: user.id },
-      })
-      customerId = customer.id
-
-      await supabase.from('subscriptions').upsert({
-        user_id: user.id,
-        stripe_customer_id: customerId,
-        plan: 'free',
-        status: 'active',
-      }, { onConflict: 'user_id' })
+    const parsed = bodySchema.safeParse(body)
+    if (!parsed.success) {
+      return Response.json(
+        { error: 'Validation failed', code: 'VALIDATION_ERROR', fields: parsed.error.flatten().fieldErrors },
+        { status: 422 }
+      )
     }
+
+    const { pack } = parsed.data
+    const priceId = PACK_PRICE_IDS[pack]
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      mode: 'subscription',
-      line_items: [{ price: process.env.STRIPE_PRO_PRICE_ID!, quantity: 1 }],
-      success_url: `${appUrl}/billing?success=true`,
+      mode: 'payment',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/billing?success=true&pack=${pack}`,
       cancel_url: `${appUrl}/billing?canceled=true`,
-      allow_promotion_codes: true,
-      metadata: { supabase_user_id: user.id },
+      customer_email: user.email,
+      metadata: { supabase_user_id: user.id, pack },
     })
 
     return Response.json({ url: session.url }, { status: 200 })
   } catch (error) {
     console.error('[stripe/checkout]', error)
-    return Response.json({ error: 'Something went wrong', code: 'INTERNAL_ERROR' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Something went wrong'
+    return Response.json({ error: message, code: 'INTERNAL_ERROR' }, { status: 500 })
   }
 }

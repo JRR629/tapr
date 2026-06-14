@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { AthleteProfile } from '@/types/profile'
+import { DISTANCE_LABELS as SPORT_DISTANCE_LABELS } from '@/lib/sports'
 
 interface AthleteProfileSummaryProps {
   profile: AthleteProfile
@@ -21,12 +22,7 @@ const SPORT_LABELS: Record<string, string> = {
   none: 'None',
 }
 
-const DISTANCE_LABELS: Record<string, string> = {
-  sprint: 'Sprint',
-  olympic: 'Olympic',
-  '70.3': '70.3',
-  ironman: 'Ironman',
-}
+const DISTANCE_LABELS = SPORT_DISTANCE_LABELS
 
 const BUDGET_LABELS: Record<string, string> = {
   value: 'Value',

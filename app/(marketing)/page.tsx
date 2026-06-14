@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import EmailCapture from '@/components/EmailCapture'
 
 export const dynamic = 'force-dynamic'
@@ -49,12 +50,12 @@ function Hero() {
         Not someone else&apos;s.
       </h1>
       <p className="text-[#D1D5DB] text-lg md:text-xl leading-relaxed mb-10 max-w-2xl mx-auto">
-        Tapr asks the questions that matter, runs your answers against expert reviews, and tells you exactly what to buy — and why it&apos;s right for you specifically.
+        Tapr asks the questions that matter, runs your answers against expert reviews, and tells you exactly what to buy — and why it&apos;s right for your sport and body.
       </p>
       <div className="max-w-md mx-auto mb-4">
         <EmailCapture />
       </div>
-      <p className="text-[#6B7280] text-sm">5 free credits at launch · No credit card required · Wetsuits &amp; GPS Watches first</p>
+      <p className="text-[#6B7280] text-sm">3 free credits at launch · No credit card required · For every endurance sport</p>
     </section>
   )
 }
@@ -64,7 +65,7 @@ function HowItWorks() {
     {
       number: '01',
       title: 'Build your profile',
-      body: 'Tell us your race distances, experience, budget, and existing gear. Takes 4 minutes. This is the context generic advice never has.',
+      body: 'Tell us your sport, race distances, experience, budget, and existing gear. Takes 4 minutes. This is the context generic advice never has.',
     },
     {
       number: '02',
@@ -117,7 +118,7 @@ function WhyTapr() {
         <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-7">
           <h3 className="font-display text-3xl text-white mb-3">Google it</h3>
           <p className="text-[#D1D5DB] leading-relaxed">
-            You&apos;ll find lists. &ldquo;Best GPS watches for triathlon 2025.&rdquo; They&apos;re written by publications that reviewed two or three watches, sometimes by writers who don&apos;t race. The top result is whoever has the best SEO, not whoever has the best answer. The recommendations don&apos;t know your race distance, your budget, or that you already own a Garmin Edge and switching ecosystems means starting your training history over. You&apos;ll read four articles that broadly agree on the top pick, feel mildly confident, and still wonder if you missed something.
+            You&apos;ll find lists. &ldquo;Best running shoes 2025&rdquo; or &ldquo;Best triathlon wetsuits.&rdquo; They&apos;re written by publications that reviewed a handful of options, sometimes by writers who don&apos;t compete in your sport. The top result is whoever has the best SEO, not whoever has the best answer. The recommendations don&apos;t know your sport, your budget, or your fit history. You&apos;ll read four articles that broadly agree on the top pick, feel mildly confident, and still wonder if you missed something.
           </p>
         </div>
         <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-7">
@@ -129,7 +130,7 @@ function WhyTapr() {
         <div className="bg-[#0F2040] border border-[#FF6B35] rounded-lg p-7 shadow-[0_0_40px_rgba(255,107,53,0.08)]">
           <h3 className="font-display text-3xl text-[#FF6B35] mb-3">Tapr</h3>
           <p className="text-[#D1D5DB] leading-relaxed">
-            Your profile is already there. The right questions get asked automatically — including ones you wouldn&apos;t think to include in a chat prompt, like whether you train with a power meter, how many bikes you ride, and whether your target race is wetsuit-legal. Every recommendation is grounded in structured data from the reviews that serious athletes actually trust, with scores that reflect what reviewers found when they tested the product. The output is a specific answer with a specific explanation for your specific situation. And it takes three minutes.
+            Your profile is already there — including your sport and discipline. The right questions get asked automatically — including ones you wouldn&apos;t think to include in a chat prompt, like whether you train with a power meter, your current equipment, and your body&apos;s specific fit needs. Every recommendation is grounded in structured data from the reviews that serious athletes actually trust, with scores that reflect what reviewers found when they tested the product. The output is a specific answer with a specific explanation for your specific situation. And it takes three minutes.
           </p>
         </div>
       </div>
@@ -147,7 +148,7 @@ function FinalCTA() {
         Be first through the door.
       </h2>
       <p className="text-[#D1D5DB] mb-8 max-w-lg mx-auto">
-        Launch-day access, 5 free credits, and a recommendation engine that actually knows your race. One email. No spam.
+        Launch-day access, 3 free credits, and a recommendation engine that actually knows your sport. One email. No spam.
       </p>
       <EmailCapture />
     </section>
@@ -162,7 +163,9 @@ function Footer() {
         Tapr earns a commission on purchases made through our links. This never influences our recommendations.
       </div>
       <div className="flex items-center gap-4 text-[#6B7280] text-sm">
-        <a href="#waitlist" className="hover:text-white transition-colors">Join waitlist</a>
+        <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+        <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+        <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
       </div>
     </footer>
   )

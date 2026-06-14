@@ -49,9 +49,7 @@ export function AffiliateButton({
           label
         )}
       </button>
-      <p className="text-[#6B7280] text-xs mt-2">
-        We earn a small commission if you buy through this link.
-      </p>
+      {/* Disclosure moved to consolidated band on recommendation page */}
     </div>
   )
 }

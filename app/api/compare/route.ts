@@ -35,15 +35,6 @@ export async function POST(request: Request) {
 
     const { categorySlug, productIds, externalProducts, recommendationId } = parsed.data
 
-    // Cross-field: combined product count must be 2-4
-    const totalProducts = productIds.length + externalProducts.length
-    if (totalProducts < 2 || totalProducts > 4) {
-      return Response.json(
-        { error: 'Select 2 to 4 products total to compare', code: 'VALIDATION_ERROR' },
-        { status: 400 }
-      )
-    }
-
     // 2. Auth check
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -51,78 +42,28 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Authentication required', code: 'UNAUTHENTICATED' }, { status: 401 })
     }
 
-    // 3. Pro gate — hard block, no free tier for comparison
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('plan, status')
-      .eq('user_id', user.id)
-      .single()
-
-    const isPro = subscription?.plan === 'pro' && subscription?.status === 'active'
-    if (!isPro) {
-      return Response.json(
-        { error: 'Comparison is a Pro feature. Upgrade to Pro for unlimited comparisons.', code: 'PRO_REQUIRED' },
-        { status: 403 }
-      )
+    // 3. Validate product count (hard cap: 4 max regardless of anything)
+    const totalProducts = productIds.length + externalProducts.length
+    if (totalProducts < 2) {
+      return Response.json({ error: 'At least 2 products required for comparison', code: 'VALIDATION_ERROR' }, { status: 400 })
+    }
+    if (totalProducts > 4) {
+      return Response.json({ error: 'Maximum 4 products per comparison', code: 'VALIDATION_ERROR' }, { status: 400 })
     }
 
-    // 3b. Usage cap checks for Pro
-    const period = new Date().toISOString().slice(0, 7) // 'YYYY-MM'
-    const today = new Date().toISOString().split('T')[0]  // 'YYYY-MM-DD'
+    const adminDb = createAdminClient()
 
-    const [monthlyUsage, dailyUsage] = await Promise.all([
-      supabase
-        .from('usage_counters')
-        .select('comp_count')
-        .eq('user_id', user.id)
-        .eq('period', period)
-        .single(),
-      supabase
-        .from('usage_counters')
-        .select('comp_count')
-        .eq('user_id', user.id)
-        .eq('period', today)
-        .single(),
-    ])
-
-    const monthlyCompCount = monthlyUsage.data?.comp_count ?? 0
-    const dailyCompCount = dailyUsage.data?.comp_count ?? 0
-
-    if (dailyCompCount >= 10) {
-      return Response.json(
-        { error: 'You\'ve reached your 10 comparisons for today. Your daily limit resets at midnight.', code: 'RATE_LIMITED' },
-        { status: 429 }
-      )
-    }
-    if (monthlyCompCount >= 50) {
-      return Response.json(
-        { error: 'You\'ve reached your 50 comparisons this month. Your limit resets on the 1st.', code: 'RATE_LIMITED' },
-        { status: 429 }
-      )
-    }
-
-    // 4. Fetch athlete profile
-    const { data: profile, error: profileError } = await supabase
-      .from('athlete_profiles')
-      .select(
-        'id, user_id, race_distances, experience_level, background_sport, gender, date_of_birth, country, city, state, height_feet, height_inches, weight_lbs, budget_style, fit_issues, existing_gear, local_vs_travel, racing_season, target_race_name, target_race_date, race_id, inseam_inches, torso_length_inches, arm_length_inches, arm_span_inches, shoulder_width_inches, chest_circumference_inches, hip_circumference_inches, neck_circumference_inches, flexibility_level, current_bike, foot_width, arch_type, created_at, updated_at'
-      )
-      .eq('user_id', user.id)
-      .single()
-
-    if (profileError || !profile) {
-      return Response.json({ error: 'Athlete profile not found. Please complete your profile first.', code: 'PROFILE_NOT_FOUND' }, { status: 400 })
-    }
-
-    // 5. Fetch layer2 context if recommendationId provided
+    // 4. Fetch layer2 context if recommendationId provided (needed to determine isQuickCompare before credit deduction)
     let layer2Responses: Record<string, unknown> | null = null
     let originalTopPickId: string | undefined
+    let recBudgetMin: number | undefined
+    let recBudgetMax: number | undefined
 
     if (recommendationId) {
       const [responsesResult, recResult] = await Promise.all([
         supabase
           .from('category_responses')
-          .select('responses')
+          .select('responses, budget_min_usd, budget_max_usd')
           .eq('recommendation_id', recommendationId)
           .single(),
         supabase
@@ -135,13 +76,52 @@ export async function POST(request: Request) {
 
       if (responsesResult.data) {
         layer2Responses = responsesResult.data.responses as Record<string, unknown>
+        recBudgetMin = responsesResult.data.budget_min_usd ?? undefined
+        recBudgetMax = responsesResult.data.budget_max_usd ?? undefined
       }
       if (recResult.data?.top_pick_product_id) {
         originalTopPickId = recResult.data.top_pick_product_id
       }
     }
 
-    // 6. Fetch DB products and validate they belong to this category
+    // 5. Compute quick compare flag and credit cost
+    const isQuickCompare =
+      !!recommendationId &&
+      !!originalTopPickId &&
+      totalProducts === 2 &&
+      productIds.includes(originalTopPickId)
+
+    const creditCost = isQuickCompare ? 0 : (totalProducts <= 2 ? 1 : 2)
+
+    // 6. Deduct credits atomically before calling Claude (skip if free quick compare)
+    if (creditCost > 0) {
+      const { data: deducted, error: deductErr } = await adminDb.rpc('deduct_credits', {
+        p_user_id: user.id,
+        p_amount: creditCost,
+        p_reason: creditCost === 1 ? (isQuickCompare ? 'quick_compare_3' : 'comparison_2') : (isQuickCompare ? 'quick_compare_4' : 'comparison_3_4'),
+      })
+      if (deductErr || !deducted) {
+        return Response.json(
+          { error: "You've used all your credits. Buy a credit pack to continue.", code: 'INSUFFICIENT_CREDITS' },
+          { status: 402 }
+        )
+      }
+    }
+
+    // 7. Fetch athlete profile
+    const { data: profile, error: profileError } = await supabase
+      .from('athlete_profiles')
+      .select(
+        'id, user_id, sports, current_focus_sport, country, race_distances, experience_level, background_sport, gender, date_of_birth, city, state, height_feet, height_inches, weight_lbs, budget_style, fit_issues, existing_gear, local_vs_travel, racing_season, target_race_name, target_race_date, race_id, inseam_inches, torso_length_inches, arm_length_inches, arm_span_inches, shoulder_width_inches, chest_circumference_inches, hip_circumference_inches, neck_circumference_inches, flexibility_level, current_bike, foot_width, arch_type, created_at, updated_at'
+      )
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return Response.json({ error: 'Athlete profile not found. Please complete your profile first.', code: 'PROFILE_NOT_FOUND' }, { status: 400 })
+    }
+
+    // 8. Fetch DB products and validate they belong to this category
     const dbProducts = await getProductsByIds(productIds)
 
     // Validate category membership for DB products
@@ -171,7 +151,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 7. Fetch category id for saving
+    // 9. Fetch category id for saving
     const { data: category } = await supabase
       .from('gear_categories')
       .select('id')
@@ -182,7 +162,7 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Category not found', code: 'NOT_FOUND' }, { status: 400 })
     }
 
-    // 8. Build prompt
+    // 10. Build prompt
     const prompt = buildComparisonPrompt({
       profile: profile as AthleteProfile,
       layer2Responses,
@@ -190,14 +170,16 @@ export async function POST(request: Request) {
       externalProducts,
       categorySlug,
       originalTopPickId,
+      budgetMin: recBudgetMin,
+      budgetMax: recBudgetMax,
     })
 
-    // 9. Call Anthropic with streaming
+    // 11. Call Anthropic with streaming
     let streamResponse: ReturnType<typeof anthropic.messages.stream>
     try {
       streamResponse = anthropic.messages.stream({
         model: 'claude-sonnet-4-5',
-        max_tokens: 4096,
+        max_tokens: 6144,
         messages: [{ role: 'user', content: prompt }],
       })
     } catch (err) {
@@ -208,7 +190,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 10. Return streaming response, accumulate full text
+    // 12. Return streaming response, accumulate full text
     const encoder = new TextEncoder()
     let accumulatedText = ''
 
@@ -267,9 +249,6 @@ export async function POST(request: Request) {
             // Honor pre-generated ID from client header if present
             const compId = request.headers.get('X-Comparison-Id') ?? crypto.randomUUID()
 
-            // Use service-role client — gear_comparisons INSERT is server-trusted
-            const adminDb = createAdminClient()
-
             const { error: saveError } = await adminDb
               .from('gear_comparisons')
               .insert({
@@ -288,22 +267,6 @@ export async function POST(request: Request) {
             if (saveError) {
               console.error('[compare] failed to save comparison:', saveError.message)
             }
-
-            // Increment both daily and monthly comparison counters
-            await Promise.all([
-              supabase.rpc('increment_usage_counter', {
-                p_user_id: user.id,
-                p_period: period,
-                p_rec_count: 0,
-                p_comp_count: 1,
-              }),
-              supabase.rpc('increment_usage_counter', {
-                p_user_id: user.id,
-                p_period: today,
-                p_rec_count: 0,
-                p_comp_count: 1,
-              }),
-            ])
           } catch (bgErr) {
             console.error('[compare] background save error:', bgErr)
           }

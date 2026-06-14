@@ -7,9 +7,10 @@ import { Zap, GitCompareArrows } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ProductPickerDropdown } from '@/components/ProductPickerDropdown'
 import { ComparisonResultCard } from '@/components/ComparisonResultCard'
-import { ProGate } from '@/components/ProGate'
 import { LoadingProgress } from '@/components/LoadingProgress'
+import { ModeChips } from '@/components/ModeChips'
 import { useComparison } from '@/hooks/useComparison'
+import { useCredits } from '@/hooks/useCredits'
 import type { CompareSlot, DBProductSlot, ExternalProductSlot, ComparisonResult } from '@/types/comparison'
 
 function formatDate(dateString: string): string {
@@ -25,6 +26,9 @@ function ComparePageInner() {
   const categorySlug = params.category
 
   const { streamedText, result, isStreaming, isComplete, error, comparisonId, reset, runComparison } = useComparison()
+  const { credits } = useCredits()
+
+  const MAX_PRODUCTS = 4
 
   const [pastComparisons, setPastComparisons] = useState<Array<{
     id: string
@@ -42,8 +46,7 @@ function ComparePageInner() {
       .limit(5)
       .then(({ data }) => {
         if (data) setPastComparisons(data as Array<{ id: string; created_at: string; winner_product_name: string | null }>)
-      })
-      .catch(() => {})
+      }, () => {})
   }, [categorySlug])
 
   // Saved comparison state (loaded from DB via ?id=)
@@ -51,6 +54,10 @@ function ComparePageInner() {
   const [savedResult, setSavedResult] = useState<ComparisonResult | null>(null)
   const [loadingId, setLoadingId] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+
+  const recommendationId = searchParams.get('rec') ?? undefined
+  const hasRecContext = !!recommendationId
+  const isQuickCompare = searchParams.get('quickcompare') === '1'
 
   // Parse URL params into initial slots
   function parseInitialSlots(): (CompareSlot | null)[] {
@@ -60,13 +67,16 @@ function ComparePageInner() {
     const allSlots: CompareSlot[] = []
 
     if (productsParam) {
-      for (const id of productsParam.split(',').filter(Boolean)) {
+      const productIdList = productsParam.split(',').filter(Boolean)
+      for (let idx = 0; idx < productIdList.length; idx++) {
+        const id = productIdList[idx]
         const slot: DBProductSlot = {
           productId: id,
           productName: id, // will be overridden once we know the name — placeholder
           priceUsd: 0,
           isExternal: false,
-          isFromRecommendation: true,
+          // In quick compare mode, slot 0 is the recommendation — lock it via isFromRecommendation
+          isFromRecommendation: isQuickCompare ? idx === 0 : true,
         }
         allSlots.push(slot)
       }
@@ -89,9 +99,6 @@ function ComparePageInner() {
     return result
   }
 
-  const recommendationId = searchParams.get('rec') ?? undefined
-  const hasRecContext = !!recommendationId
-
   const [slots, setSlots] = useState<(CompareSlot | null)[]>(parseInitialSlots)
 
   // Derived state
@@ -104,7 +111,7 @@ function ComparePageInner() {
   }
 
   function addSlot() {
-    setSlots((prev) => (prev.length < 4 ? [...prev, null] : prev))
+    setSlots((prev) => (prev.length < MAX_PRODUCTS ? [...prev, null] : prev))
   }
 
   function removeSlot(index: number) {
@@ -206,11 +213,19 @@ function ComparePageInner() {
     router.replace(`/gear/${categorySlug}/compare${params.toString() ? `?${params.toString()}` : ''}`)
   }
 
-  // PRO_REQUIRED
-  if (error === 'PRO_REQUIRED') {
+  if (error === 'INSUFFICIENT_CREDITS') {
     return (
       <div className="max-w-xl mx-auto px-6 py-12">
-        <ProGate feature="Side-by-side product comparison" />
+        <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-6 text-center">
+          <p className="text-white font-semibold mb-2">You&apos;ve used all your credits.</p>
+          <p className="text-[#6B7280] text-sm mb-5">Buy a credit pack to continue comparing gear.</p>
+          <a
+            href="/billing"
+            className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-6 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center min-h-[44px]"
+          >
+            Buy Credits
+          </a>
+        </div>
       </div>
     )
   }
@@ -218,15 +233,32 @@ function ComparePageInner() {
   const displayResult = savedResult ?? (isComplete ? result : null)
 
   return (
-    <div className="w-full px-6 md:px-10 lg:px-16 py-8">
+    <div className="max-w-6xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="mb-0">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-[#6B7280] hover:text-white text-sm transition-colors mb-6"
+        >
+          <span>←</span> Back to Dashboard
+        </Link>
+        <div className="mb-6">
+          <ModeChips categorySlug={categorySlug} active="compare" />
+        </div>
         <p className="text-[#6B7280] text-xs uppercase tracking-widest mb-2">
           {categorySlug.replace(/-/g, ' ')}
         </p>
-        <h1 className="font-display text-5xl text-white mb-4">
-          {categorySlug.replace(/-/g, ' ').toUpperCase()}
-        </h1>
+        <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
+          <h1 className="font-display text-5xl text-white">
+            {categorySlug.replace(/-/g, ' ').toUpperCase()}
+          </h1>
+          {credits !== null && (
+            <div className="text-right shrink-0">
+              <p className="text-[#6B7280] text-xs uppercase tracking-wide mb-1">Credits</p>
+              <p className="text-white text-sm font-semibold">{credits} remaining</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Load error */}
@@ -265,6 +297,7 @@ function ComparePageInner() {
             </button>
           </div>
           <ComparisonResultCard result={displayResult} categorySlug={categorySlug} />
+          <p className="text-[#6B7280] text-xs mt-4">Prices shown are approximate — verify current price at retailer.</p>
 
           {/* Footer nav */}
           <div className="mt-4 pt-6 border-t border-[#1A3A5C] flex flex-col sm:flex-row gap-3">
@@ -299,11 +332,42 @@ function ComparePageInner() {
           <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-8">
             <LoadingProgress
               label="COMPARING FOR YOUR PROFILE"
-              messages={[
+              messages={categorySlug === 'nutrition' ? [
+                'Reading expert review data…',
+                'Analyzing carbohydrate delivery and sodium content…',
+                'Matching products to your race duration…',
+                'Weighing GI tolerance and flavor for long efforts…',
+                'Scoring fit against your athlete profile…',
+                'Identifying key tradeoffs…',
+                'Writing your personalized verdict…',
+              ] : categorySlug === 'wetsuits' ? [
+                'Reading expert review data…',
+                'Analyzing buoyancy and flexibility scores…',
+                'Matching cut and sleeve type to your swim profile…',
+                'Weighing fit against your body stats…',
+                'Scoring against your race conditions…',
+                'Identifying key tradeoffs…',
+                'Writing your personalized verdict…',
+              ] : categorySlug === 'running-shoes' ? [
+                'Reading expert review data…',
+                'Analyzing ride, cushion, and stability scores…',
+                'Matching specs to your foot mechanics and mileage…',
+                'Weighing late-race stability for your longest distance…',
+                'Scoring fit against your athlete profile…',
+                'Identifying key tradeoffs…',
+                'Writing your personalized verdict…',
+              ] : categorySlug === 'gps-watches' ? [
                 'Reading expert review data…',
                 'Analyzing GPS accuracy scores…',
                 'Matching specs to your race distance…',
                 'Weighing battery life for your longest event…',
+                'Scoring fit against your athlete profile…',
+                'Identifying key tradeoffs…',
+                'Writing your personalized verdict…',
+              ] : [
+                // Generic fallback for future categories without dedicated copy
+                'Reading expert review data…',
+                'Matching specs to your race distance…',
                 'Scoring fit against your athlete profile…',
                 'Identifying key tradeoffs…',
                 'Writing your personalized verdict…',
@@ -316,6 +380,20 @@ function ComparePageInner() {
       ) : (
         /* State: Picker */
         <div className="flex flex-col gap-6">
+          {/* Quick Compare credit callout */}
+          {isQuickCompare && (
+            <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-4 flex items-start gap-3">
+              <div className="w-1 rounded-full bg-[#22C55E] shrink-0 self-stretch" />
+              <div>
+                <p className="text-white text-sm font-semibold mb-1">Quick Compare — free for your first shoe</p>
+                <p className="text-[#9CA3AF] text-sm">
+                  Comparing our recommendation against 1 shoe you had in mind is free.
+                  Add a 2nd shoe — 1 credit. Add a 3rd shoe — 2 credits.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Personalization callout */}
           <div className="bg-[#FF6B3510] border border-[#FF6B3530] rounded-lg p-4 flex gap-3">
             <div className="w-1 rounded-full bg-[#FF6B35] shrink-0 self-stretch" />
@@ -332,21 +410,26 @@ function ComparePageInner() {
           </div>
 
           {/* Error */}
-          {error && error !== 'PRO_REQUIRED' && (
+          {error && error !== 'INSUFFICIENT_CREDITS' && (
             <div className="bg-[#EF444410] border border-[#EF444430] rounded-lg p-4">
               <p className="text-[#EF4444] text-sm">{error}</p>
             </div>
           )}
 
           {/* Product pickers */}
-          <div className={`grid gap-4 ${slots.length === 2 ? 'grid-cols-1 md:grid-cols-2' : slots.length === 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
+          <div className={`grid gap-4 ${
+            slots.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
+            slots.length === 3 ? 'grid-cols-1 md:grid-cols-3' :
+            slots.length === 4 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' :
+            'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+          }`}>
             {slots.map((slot, i) => (
               <div key={i}>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[#6B7280] text-xs uppercase tracking-wide font-semibold">
                     Product {String.fromCharCode(65 + i)}
                   </p>
-                  {slots.length > 2 && (
+                  {slots.length > 2 && !(isQuickCompare && i === 0) && (
                     <button
                       type="button"
                       onClick={() => removeSlot(i)}
@@ -356,27 +439,39 @@ function ComparePageInner() {
                     </button>
                   )}
                 </div>
-                <ProductPickerDropdown
-                  category={categorySlug}
-                  value={slot}
-                  onChange={(v) => updateSlot(i, v)}
-                  onClear={() => updateSlot(i, null)}
-                  excludeProductIds={getExcludedIds(i)}
-                  placeholder="Select or enter a product"
-                />
+                {isQuickCompare && i === 0 ? (
+                  <div className="bg-[#0F2040] border border-[#FF6B35]/40 rounded-lg p-4 flex flex-col gap-1.5 min-h-[72px]">
+                    <span className="text-[#FF6B35] text-xs font-semibold uppercase tracking-widest">Our Recommendation</span>
+                    <span className="text-white text-sm font-semibold">{slot?.productName ?? '…'}</span>
+                    {slot && !slot.isExternal && (slot as DBProductSlot).priceUsd > 0 && (
+                      <span className="text-[#9CA3AF] text-xs">${(slot as DBProductSlot).priceUsd.toLocaleString()}</span>
+                    )}
+                  </div>
+                ) : (
+                  <ProductPickerDropdown
+                    category={categorySlug}
+                    value={slot}
+                    onChange={(v) => updateSlot(i, v)}
+                    onClear={() => updateSlot(i, null)}
+                    excludeProductIds={getExcludedIds(i)}
+                    placeholder="Select or enter a product"
+                  />
+                )}
               </div>
             ))}
           </div>
 
           {/* Add slot button */}
-          {slots.length < 4 && (
+          {slots.length < MAX_PRODUCTS && (
             <button
               type="button"
               onClick={addSlot}
               className="w-full border border-dashed border-[#1A3A5C] hover:border-[#FF6B35] text-[#6B7280] hover:text-white px-4 py-3 rounded-md transition-all text-sm flex items-center justify-center gap-2 min-h-[44px]"
             >
               <span className="text-lg leading-none">+</span>
-              Add another product (up to 4)
+              {isQuickCompare
+                ? 'Add another shoe to compare (+1 credit for 3rd · +2 credits for 4th)'
+                : 'Add another product (up to 4)'}
             </button>
           )}
 
@@ -403,12 +498,12 @@ function ComparePageInner() {
             className="w-full bg-[#FF6B35] hover:bg-[#E55A24] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-4 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px] flex items-center justify-center gap-2 text-lg"
           >
             <GitCompareArrows className="w-5 h-5" />
-            {enoughSelected ? 'Run Comparison' : 'Select at least 2 products to compare'}
+            {isQuickCompare && enoughSelected
+              ? 'Compare Our Pick vs Yours'
+              : enoughSelected
+              ? 'Run Comparison'
+              : 'Select at least 2 products to compare'}
           </button>
-
-          <p className="text-center text-[#6B7280] text-xs">
-            Price shown is approximate — verify current price at retailer.
-          </p>
 
           {pastComparisons.length > 0 && (
             <div className="mt-4">
@@ -447,7 +542,7 @@ function ComparePageInner() {
 export default function ComparePage() {
   return (
     <Suspense fallback={
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="h-8 bg-[#0F2040] rounded animate-pulse mb-4 w-48" />
         <div className="h-64 bg-[#0F2040] rounded animate-pulse" />
       </div>

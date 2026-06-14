@@ -5,7 +5,9 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
 import type { AthleteProfile } from '@/types/profile'
-import { TRIATHLON_COUNTRIES, getRegionConfig } from '@/lib/locationData'
+import { SUPPORTED_COUNTRIES, getRegionConfig } from '@/lib/locationData'
+import { SPORTS, SPORT_LABELS, type Sport } from '@/lib/sports'
+import { RaceDistancesField } from '@/components/RaceDistancesField'
 
 interface ProfileEditClientProps {
   profile: AthleteProfile | null
@@ -46,7 +48,11 @@ type FormData = Partial<
     | 'foot_width'
     | 'arch_type'
   >
->
+> & {
+  sports?: string[] | null
+  current_focus_sport?: string | null
+  current_focus_distance?: string | null
+}
 
 const inputClass =
   'bg-[#0A1628] border border-[#1A3A5C] text-white placeholder-gray-500 rounded-md px-4 py-3 focus:border-[#FF6B35] focus:outline-none focus:shadow-[0_0_0_3px_rgba(255,107,53,0.15)] min-h-[44px] w-full transition-shadow'
@@ -137,6 +143,10 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
     current_bike: profile?.current_bike ?? '',
     foot_width: profile?.foot_width ?? '',
     arch_type: profile?.arch_type ?? '',
+    // Multi-sport
+    sports: profile?.sports ?? ['triathlon'],
+    current_focus_sport: profile?.current_focus_sport ?? 'triathlon',
+    current_focus_distance: profile?.current_focus_distance ?? null,
   })
 
   const [saving, setSaving] = useState(false)
@@ -202,16 +212,38 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
         <h2 className="font-display text-3xl text-white mb-6">RACING BACKGROUND</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <MultiCheckbox
-            label="Race Distances"
-            options={[
-              { value: 'sprint', label: 'Sprint' },
-              { value: 'olympic', label: 'Olympic' },
-              { value: '70.3', label: '70.3' },
-              { value: 'ironman', label: 'Ironman' },
-            ]}
-            selected={form.race_distances ?? []}
-            onChange={(v) => setField('race_distances', v)}
+            label="Sports"
+            options={SPORTS.map(s => ({ value: s, label: SPORT_LABELS[s] }))}
+            selected={form.sports ?? []}
+            onChange={(v) => setField('sports', v)}
           />
+
+          {(form.sports?.length ?? 0) > 1 && (
+            <div>
+              <label className={labelClass}>Current Focus Sport</label>
+              <select
+                value={form.current_focus_sport ?? ''}
+                onChange={(e) => setField('current_focus_sport', e.target.value)}
+                className={selectClass}
+              >
+                <option value="">Select...</option>
+                {(form.sports ?? []).map(s => (
+                  <option key={s} value={s}>{SPORT_LABELS[s as Sport]}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="md:col-span-2">
+            <label className={labelClass}>Race Distances</label>
+            <RaceDistancesField
+              sports={(form.sports ?? []) as Sport[]}
+              selectedDistances={form.race_distances ?? []}
+              currentFocus={form.current_focus_distance ?? null}
+              onDistancesChange={(next) => setField('race_distances', next)}
+              onCurrentFocusChange={(next) => setField('current_focus_distance', next)}
+            />
+          </div>
 
           <div>
             <label className={labelClass}>Experience Level</label>
@@ -331,7 +363,7 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
               className={selectClass}
             >
               <option value="">Select country</option>
-              {TRIATHLON_COUNTRIES.map(c => (
+              {SUPPORTED_COUNTRIES.map(c => (
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
             </select>
@@ -441,17 +473,31 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
             </select>
           </div>
 
-          <MultiCheckbox
-            label="Existing Gear"
-            options={[
-              { value: 'bike', label: 'Bike' },
-              { value: 'wetsuit', label: 'Wetsuit' },
-              { value: 'tri_suit', label: 'Tri Suit' },
-              { value: 'gps_watch', label: 'GPS Watch' },
-            ]}
-            selected={form.existing_gear ?? []}
-            onChange={(v) => setField('existing_gear', v)}
-          />
+          {(() => {
+            const gearOptionsByKey: Record<string, string> = {
+              gps_watch: 'GPS Watch', bike: 'Bike', wetsuit: 'Wetsuit',
+              tri_suit: 'Tri Suit', cycling_kit: 'Cycling Kit',
+              cycling_shoes: 'Cycling Shoes', running_shoes: 'Running Shoes',
+              goggles: 'Goggles', starting_fresh: 'Starting Fresh',
+            }
+            const gearOptionsForSports = (sports: string[]): string[] => {
+              const opts = new Set<string>(['gps_watch', 'starting_fresh'])
+              if (sports.includes('triathlon')) { opts.add('bike'); opts.add('wetsuit'); opts.add('tri_suit') }
+              if (sports.includes('cycling')) { opts.add('bike'); opts.add('cycling_kit'); opts.add('cycling_shoes') }
+              if (sports.includes('running')) opts.add('running_shoes')
+              if (sports.includes('swimming')) { opts.add('wetsuit'); opts.add('goggles') }
+              return Array.from(opts)
+            }
+            const gearOptions = gearOptionsForSports(form.sports ?? [])
+            return (
+              <MultiCheckbox
+                label="Existing Gear"
+                options={gearOptions.map(v => ({ value: v, label: gearOptionsByKey[v] || v }))}
+                selected={form.existing_gear ?? []}
+                onChange={(v) => setField('existing_gear', v)}
+              />
+            )
+          })()}
 
           <MultiCheckbox
             label="Known Fit Issues"

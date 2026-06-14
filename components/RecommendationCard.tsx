@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Info, ArrowUpCircle, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
+import { Info, ExternalLink, ChevronDown, ChevronUp, Flag, PlusCircle } from 'lucide-react'
 import { AffiliateButton } from '@/components/AffiliateButton'
-import { ProGate } from '@/components/ProGate'
 import { ComparisonLauncher } from '@/components/ComparisonLauncher'
+import { ReportCorrectionModal } from '@/components/ReportCorrectionModal'
+import { SuggestProductModal } from '@/components/SuggestProductModal'
 import type { RecommendationTopPick, RecommendationRunnerUp, RecommendationUpgradeOption } from '@/types/recommendation'
 
 interface RecommendationCardProps {
@@ -18,10 +19,10 @@ interface RecommendationCardProps {
   appleEcosystemNote?: string | null
   recommendationId?: string
   categorySlug?: string
-  isPro?: boolean
 }
 
 function ConfidenceIndicator({ level, reason }: { level: 'high' | 'medium' | 'low'; reason?: string }) {
+  const [expanded, setExpanded] = useState(false)
   const config = {
     high: { label: 'High Confidence', color: 'text-[#22C55E]', dotColor: 'bg-[#22C55E]' },
     medium: { label: 'Medium Confidence', color: 'text-[#F59E0B]', dotColor: 'bg-[#F59E0B]' },
@@ -43,8 +44,23 @@ function ConfidenceIndicator({ level, reason }: { level: 'high' | 'medium' | 'lo
           })}
         </div>
         <span className={`text-xs font-semibold ${config.color}`}>{config.label}</span>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="text-[#6B7280] hover:text-white transition-colors p-1 -m-1"
+          aria-label="What does this confidence level mean?"
+        >
+          <Info className="w-3.5 h-3.5" />
+        </button>
       </div>
-      {reason && <p className="text-[#9CA3AF] text-xs mt-0.5">{reason}</p>}
+      {expanded && (
+        <div className="mt-2 p-3 bg-[#0A1628] border border-[#1A3A5C] rounded-md text-xs leading-relaxed text-[#9CA3AF] max-w-sm">
+          <p className="mb-1.5"><span className="text-[#22C55E] font-semibold">High</span> — strong consensus across independent expert reviews of this product.</p>
+          <p className="mb-1.5"><span className="text-[#F59E0B] font-semibold">Medium</span> — partial or limited review coverage; recommendation is solid but the data set is thinner.</p>
+          <p className="mb-1.5"><span className="text-[#EF4444] font-semibold">Low</span> — significant gaps in available data; treat this as a best-effort suggestion.</p>
+          {reason && <p className="mt-2 pt-2 border-t border-[#1A3A5C] text-[#D1D5DB]"><span className="text-white font-semibold">For this pick:</span> {reason}</p>}
+        </div>
+      )}
     </div>
   )
 }
@@ -101,8 +117,10 @@ export function RecommendationCard({
   appleEcosystemNote,
   recommendationId,
   categorySlug,
-  isPro,
 }: RecommendationCardProps) {
+  const [reportOpen, setReportOpen] = useState(false)
+  const [suggestOpen, setSuggestOpen] = useState(false)
+
   return (
     <div className="flex flex-col gap-4">
 
@@ -116,13 +134,13 @@ export function RecommendationCard({
           <ConfidenceIndicator level={confidenceLevel} reason={lowConfidenceReason} />
         </div>
 
-        <h2 className="font-display text-4xl text-white leading-tight">
+        {/* Product name */}
+        <h2 className="font-display text-4xl text-white leading-tight mb-4">
           {topPick.productName.toUpperCase()}
         </h2>
 
-        <div className="mt-1 mb-5">
+        <div className="mb-5">
           <p className="font-mono text-[#FF6B35] text-2xl">${topPick.priceUsd.toLocaleString()}</p>
-          <p className="text-[#6B7280] text-xs mt-0.5">Price shown is approximate — verify at retailer.</p>
         </div>
 
         <div className="mb-5">
@@ -140,6 +158,7 @@ export function RecommendationCard({
               recommendationId={recommendationId}
               categorySlug={categorySlug}
               label="Shop Now"
+             
             />
           )}
         </div>
@@ -200,7 +219,7 @@ export function RecommendationCard({
             <span className="font-display text-xl text-white leading-tight truncate">
               {runnerUp.productName.toUpperCase()}
             </span>
-            <span className="font-mono text-[#9CA3AF] text-sm shrink-0" title="Price shown is approximate">
+            <span className="font-mono text-[#9CA3AF] text-sm shrink-0">
               ${runnerUp.priceUsd.toLocaleString()}*
             </span>
           </div>
@@ -219,6 +238,7 @@ export function RecommendationCard({
                 recommendationId={recommendationId}
                 categorySlug={categorySlug}
                 label="Shop Now"
+               
               />
             )}
           </div>
@@ -237,7 +257,7 @@ export function RecommendationCard({
               <span className="font-display text-xl text-white leading-tight truncate">
                 {upgradeOption.productName.toUpperCase()}
               </span>
-              <span className="font-mono text-[#9CA3AF] text-sm shrink-0" title="Price shown is approximate">
+              <span className="font-mono text-[#9CA3AF] text-sm shrink-0">
                 ${upgradeOption.priceUsd.toLocaleString()}*
               </span>
             </div>
@@ -253,6 +273,7 @@ export function RecommendationCard({
               recommendationId={recommendationId}
               categorySlug={categorySlug}
               label="Shop Now"
+             
             />
           </div>
         </CollapsibleRow>
@@ -326,19 +347,53 @@ export function RecommendationCard({
       )}
 
       {/* ── COMPARE ── */}
-      {isPro && categorySlug ? (
+      {categorySlug && (
         <ComparisonLauncher
           categorySlug={categorySlug}
           categoryName={categorySlug.replace(/-/g, ' ')}
+          topPickId={topPick.productId}
+          runnerUpId={runnerUp.productId}
+          recommendationId={recommendationId}
         />
-      ) : (
-        <div>
-          <p className="text-[#6B7280] text-xs uppercase tracking-wide mb-3 font-semibold">
-            Side-by-Side Comparison
-          </p>
-          <ProGate feature="Side-by-side product comparison" />
-        </div>
       )}
+
+      {/* ── FEEDBACK FOOTER ── */}
+      <div className="flex items-center justify-between gap-4 pt-3 border-t border-[#1A3A5C] flex-wrap">
+        {categorySlug && (
+          <button
+            type="button"
+            onClick={() => setSuggestOpen(true)}
+            className="flex items-center gap-1.5 text-[#6B7280] hover:text-[#9CA3AF] text-sm transition-colors min-h-[44px] px-2"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            Suggest a product
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setReportOpen(true)}
+          className="flex items-center gap-1.5 text-[#6B7280] hover:text-[#9CA3AF] text-sm transition-colors min-h-[44px] px-2 ml-auto"
+        >
+          <Flag className="w-3.5 h-3.5" />
+          Report an issue
+        </button>
+      </div>
+
+      {categorySlug && (
+        <SuggestProductModal
+          categorySlug={categorySlug}
+          categoryLabel={categorySlug.replace(/-/g, ' ')}
+          isOpen={suggestOpen}
+          onClose={() => setSuggestOpen(false)}
+        />
+      )}
+      <ReportCorrectionModal
+        productId={topPick.productId}
+        productName={topPick.productName}
+        recommendationId={recommendationId}
+        isOpen={reportOpen}
+        onClose={() => setReportOpen(false)}
+      />
     </div>
   )
 }

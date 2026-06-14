@@ -71,9 +71,10 @@ export function ProductPickerDropdown({
   })
 
   function selectDBProduct(product: GearProduct) {
+    const nameAlreadyHasBrand = product.name.toLowerCase().startsWith(product.brand.toLowerCase())
     const slot: DBProductSlot = {
       productId: product.id,
-      productName: `${product.brand} ${product.name}`,
+      productName: nameAlreadyHasBrand ? product.name : `${product.brand} ${product.name}`,
       priceUsd: product.price_usd ?? 0,
       isExternal: false,
       isFromRecommendation: false,
@@ -116,9 +117,18 @@ export function ProductPickerDropdown({
               AI
             </span>
           )}
-          <span className={`truncate text-sm ${value ? 'text-white' : 'text-[#9CA3AF]'}`}>
-            {chipLabel}
-          </span>
+          {value ? (
+            <span className="flex flex-col items-start min-w-0">
+              <span className="truncate text-sm text-white leading-snug">{chipLabel}</span>
+              {!value.isExternal && (value as DBProductSlot).priceUsd > 0 && (
+                <span className="text-[#6B7280] text-xs font-mono">
+                  ${(value as DBProductSlot).priceUsd.toLocaleString()}
+                </span>
+              )}
+            </span>
+          ) : (
+            <span className="truncate text-sm text-[#9CA3AF]">{chipLabel}</span>
+          )}
         </span>
         <div className="flex items-center gap-1 shrink-0">
           {value && (

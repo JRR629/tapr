@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 const feedbackSchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -60,8 +61,10 @@ export async function PATCH(
     const { rating, comment } = validation.data
     const recId = params.id
 
+    const adminDb = createAdminClient()
+
     // 3. Verify recommendation belongs to authenticated user
-    const { data: rec, error: recError } = await supabase
+    const { data: rec, error: recError } = await adminDb
       .from('gear_recommendations')
       .select('user_id')
       .eq('id', recId)
@@ -83,7 +86,7 @@ export async function PATCH(
     }
 
     // 4. Update recommendation with feedback
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminDb
       .from('gear_recommendations')
       .update({
         feedback_rating: rating,

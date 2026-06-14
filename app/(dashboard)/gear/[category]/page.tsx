@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { ComingSoonCard } from '@/components/ComingSoonCard'
+import { ModeChips } from '@/components/ModeChips'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,8 +52,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }
 
   // Check for existing recommendations for this category
+  const adminDb = createAdminClient()
   const { data: existingRecs } = user
-    ? await supabase
+    ? await adminDb
         .from('gear_recommendations')
         .select('id, created_at, recommendation_json')
         .eq('user_id', user.id)
@@ -72,7 +75,16 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const latest = existingRecs?.[0] ?? null
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-12">
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-1.5 text-[#6B7280] hover:text-white text-sm transition-colors mb-6"
+      >
+        <span>←</span> Back to Dashboard
+      </Link>
+      <div className="mb-6">
+        <ModeChips categorySlug={categorySlug} active="recommend" />
+      </div>
       <p className="text-[#6B7280] text-xs uppercase tracking-widest mb-2">
         {category.name}
       </p>

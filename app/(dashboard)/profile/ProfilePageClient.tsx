@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ProfileEditClient } from './ProfileEditClient'
 import type { AthleteProfile } from '@/types/profile'
+import { DISTANCE_LABELS } from '@/lib/sports'
 
 const EXPERIENCE_LABELS: Record<string, string> = {
   first_season: 'First Season',
@@ -15,12 +16,6 @@ const BUDGET_LABELS: Record<string, string> = {
   mid: 'Mid-Range',
   performance: 'Performance',
   no_limit: 'No Limit',
-}
-const DISTANCE_LABELS: Record<string, string> = {
-  sprint: 'Sprint',
-  olympic: 'Olympic',
-  '70.3': '70.3',
-  ironman: 'Ironman',
 }
 const FIT_ISSUE_LABELS: Record<string, string> = {
   shoulder_tightness: 'Shoulder Tightness',

@@ -2,6 +2,9 @@ export interface AthleteProfile {
   id: string
   user_id: string
   race_distances: string[] | null
+  sports: string[] | null
+  current_focus_sport: string | null
+  current_focus_distance: string | null
   experience_level: string | null
   background_sport: string[] | null
   country: string | null

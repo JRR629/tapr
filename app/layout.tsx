@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Bebas_Neue, DM_Sans, JetBrains_Mono } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const bebasNeue = Bebas_Neue({
@@ -22,8 +23,8 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Tapr — Stop Guessing. Start Racing with the Right Gear.',
-  description: 'Personalized triathlon gear recommendations powered by AI. Built for age-group triathletes who want confident, specific gear advice.',
+  title: 'Tapr — AI gear recommendations for endurance athletes',
+  description: 'AI-powered gear recommendations for endurance athletes — triathletes, runners, cyclists, swimmers. Built for serious athletes who want confident, specific advice.',
 }
 
 export default function RootLayout({
@@ -35,6 +36,7 @@ export default function RootLayout({
     <html lang="en" className={`${bebasNeue.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
       <body className="bg-[#0A1628] text-white font-sans antialiased">
         {children}
+        <Analytics />
       </body>
     </html>
   )

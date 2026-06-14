@@ -1,46 +1,52 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
-import { TRIATHLON_COUNTRIES, getRegionConfig } from '@/lib/locationData'
+import { SUPPORTED_COUNTRIES, getRegionConfig } from '@/lib/locationData'
+import { SPORTS, SPORT_LABELS, type Sport } from '@/lib/sports'
+import { RaceDistancesField } from '@/components/RaceDistancesField'
 import { saveProfile } from './actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface WizardAnswers {
-  // Step 1
+  // Step 0
+  sports: string[]
+  current_focus_sport: string
+  // Step 1 (conditional) or Step 2
   race_distances: string[]
-  // Step 2
+  current_focus_distance: string | null
+  // Step N
   experience_level: string
-  // Step 3
+  // Step N+1
   background_sport: string[]
-  // Step 4
+  // Step N+2
   gender: string
-  // Step 5
+  // Step N+3
   date_of_birth: string
-  // Step 6
+  // Step N+4
   country: string
   city: string
   state: string
-  // Step 7
+  // Step N+5
   height_feet: string
   height_inches: string
-  // Step 8
+  // Step N+6
   weight_lbs: string
-  // Step 9
+  // Step N+7
   budget_style: string
-  // Step 10
+  // Step N+8
   fit_issues: string[]
-  // Step 11
+  // Step N+9
   existing_gear: string[]
-  // Step 12
+  // Step N+10
   local_vs_travel: string
   racing_season: string
-  // Step 13
+  // Step N+11
   has_target_race: string
   target_race_name: string
   target_race_date: string
-  // Step 14 (optional)
+  // Step N+12 (optional)
   inseam_inches: string
   torso_length_inches: string
   arm_length_inches: string
@@ -56,7 +62,10 @@ interface WizardAnswers {
 }
 
 const INITIAL: WizardAnswers = {
+  sports: [],
+  current_focus_sport: '',
   race_distances: [],
+  current_focus_distance: null,
   experience_level: '',
   background_sport: [],
   gender: '',
@@ -89,30 +98,31 @@ const INITIAL: WizardAnswers = {
   arch_type: '',
 }
 
-const TOTAL_REQUIRED_STEPS = 13
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function canAdvance(step: number, answers: WizardAnswers): boolean {
-  switch (step) {
-    case 1: return answers.race_distances.length > 0
-    case 2: return answers.experience_level !== ''
-    case 3: return answers.background_sport.length > 0
-    case 4: return answers.gender !== ''
-    case 5: return answers.date_of_birth !== ''
-    case 6: return answers.country !== '' && answers.city.trim() !== ''
-    case 7: return answers.height_feet !== '' && answers.height_inches !== ''
-    case 8: {
+function canAdvance(step: number, answers: WizardAnswers, stepKeys: string[]): boolean {
+  const stepKey = stepKeys[step - 1]
+  switch (stepKey) {
+    case 'sports': return answers.sports.length >= 1
+    case 'current_focus_sport': return answers.current_focus_sport.length > 0
+    case 'race_distances': return answers.race_distances.length > 0
+    case 'experience_level': return answers.experience_level !== ''
+    case 'background_sport': return answers.background_sport.length > 0
+    case 'gender': return answers.gender !== ''
+    case 'date_of_birth': return answers.date_of_birth !== ''
+    case 'country': return answers.country !== '' && answers.city.trim() !== ''
+    case 'height': return answers.height_feet !== '' && answers.height_inches !== ''
+    case 'weight': {
       const w = parseInt(answers.weight_lbs)
       return !isNaN(w) && w >= 80 && w <= 400
     }
-    case 9: return answers.budget_style !== ''
-    case 10: return answers.fit_issues.length > 0
-    case 11: return answers.existing_gear.length > 0
-    case 12: return answers.local_vs_travel !== '' && answers.racing_season !== ''
-    case 13: return answers.has_target_race !== '' &&
+    case 'budget_style': return answers.budget_style !== ''
+    case 'fit_issues': return answers.fit_issues.length > 0
+    case 'existing_gear': return answers.existing_gear.length > 0
+    case 'racing_profile': return answers.local_vs_travel !== '' && answers.racing_season !== ''
+    case 'target_race': return answers.has_target_race !== '' &&
       (answers.has_target_race === 'no' || answers.target_race_name.trim() !== '')
-    case 14: return true // always skippable
+    case 'optional_measurements': return true
     default: return false
   }
 }
@@ -181,31 +191,65 @@ function MeasurementInput({
   )
 }
 
-// ─── Step renderers ───────────────────────────────────────────────────────────
-
-function Step1({ answers, update }: { answers: WizardAnswers; update: (a: Partial<WizardAnswers>) => void }) {
-  const options = [
-    { label: 'Sprint', value: 'sprint' },
-    { label: 'Olympic', value: 'olympic' },
-    { label: '70.3 Half Ironman', value: '70.3' },
-    { label: 'Full Ironman', value: 'ironman' },
-    { label: "I'm just getting started — not sure yet", value: 'not_sure' },
-  ]
-  function toggle(val: string) {
-    const cur = answers.race_distances
-    if (val === 'not_sure') {
-      update({ race_distances: cur.includes('not_sure') ? [] : ['not_sure'] })
-      return
+function NewStep0SportsSelector({ answers, update }: { answers: WizardAnswers; update: (a: Partial<WizardAnswers>) => void }) {
+  function toggle(sport: string) {
+    const current = answers.sports
+    const next = current.includes(sport)
+      ? current.filter(s => s !== sport)
+      : [...current, sport]
+    update({ sports: next })
+    if (next.length === 1) {
+      update({ current_focus_sport: next[0] })
+    } else if (next.length === 0) {
+      update({ current_focus_sport: '' })
+    } else if (!next.includes(answers.current_focus_sport)) {
+      update({ current_focus_sport: '' })
     }
-    const without = cur.filter(v => v !== 'not_sure')
-    update({ race_distances: without.includes(val) ? without.filter(v => v !== val) : [...without, val] })
   }
   return (
     <div className="space-y-3">
       <p className="text-[#6B7280] text-sm mb-5">Select all that apply.</p>
-      {options.map(o => (
-        <OptionButton key={o.value} label={o.label} selected={answers.race_distances.includes(o.value)} onClick={() => toggle(o.value)} />
+      {SPORTS.map(sport => (
+        <OptionButton
+          key={sport}
+          label={SPORT_LABELS[sport]}
+          selected={answers.sports.includes(sport)}
+          onClick={() => toggle(sport)}
+        />
       ))}
+    </div>
+  )
+}
+
+function NewStep1CurrentFocusSelector({ answers, update }: { answers: WizardAnswers; update: (a: Partial<WizardAnswers>) => void }) {
+  return (
+    <div className="space-y-3">
+      {answers.sports.map(sport => (
+        <OptionButton
+          key={sport}
+          label={SPORT_LABELS[sport as Sport]}
+          selected={answers.current_focus_sport === sport}
+          onClick={() => update({ current_focus_sport: sport })}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ─── Step renderers ───────────────────────────────────────────────────────────
+
+function StepRaceDistances({ answers, update }: { answers: WizardAnswers; update: (a: Partial<WizardAnswers>) => void }) {
+  const sports = answers.sports as Sport[]
+  return (
+    <div className="space-y-3">
+      <p className="text-[#6B7280] text-sm mb-5">Select all that apply.</p>
+      <RaceDistancesField
+        sports={sports}
+        selectedDistances={answers.race_distances}
+        currentFocus={answers.current_focus_distance}
+        onDistancesChange={(next) => update({ race_distances: next })}
+        onCurrentFocusChange={(next) => update({ current_focus_distance: next })}
+      />
     </div>
   )
 }
@@ -215,7 +259,7 @@ function Step2({ answers, update }: { answers: WizardAnswers; update: (a: Partia
     { label: 'This is my first season', value: 'first_season' },
     { label: '1–3 years', value: '1_3_years' },
     { label: '3+ years', value: '3_plus_years' },
-    { label: "I come from another endurance sport and I'm new to tri", value: 'from_other_sport' },
+    { label: "I come from another endurance sport and I'm new to this", value: 'from_other_sport' },
   ]
   return (
     <div className="space-y-3">
@@ -305,7 +349,7 @@ function Step6({ answers, update }: { answers: WizardAnswers; update: (a: Partia
           className={selectCls}
         >
           <option value="">Select country</option>
-          {TRIATHLON_COUNTRIES.map(c => (
+          {SUPPORTED_COUNTRIES.map(c => (
             <option key={c.value} value={c.value}>{c.label}</option>
           ))}
         </select>
@@ -469,13 +513,29 @@ function Step10({ answers, update }: { answers: WizardAnswers; update: (a: Parti
 }
 
 function Step11({ answers, update }: { answers: WizardAnswers; update: (a: Partial<WizardAnswers>) => void }) {
-  const options = [
-    { label: 'Bike', value: 'bike' },
-    { label: 'Wetsuit', value: 'wetsuit' },
-    { label: 'Tri suit', value: 'tri_suit' },
-    { label: 'GPS watch', value: 'gps_watch' },
-    { label: 'Starting fresh — I\'m building from scratch', value: 'starting_fresh' },
-  ]
+  const gearLabels: Record<string, string> = {
+    bike: 'Bike',
+    wetsuit: 'Wetsuit',
+    tri_suit: 'Tri Suit',
+    gps_watch: 'GPS Watch',
+    cycling_kit: 'Cycling Kit',
+    cycling_shoes: 'Cycling Shoes',
+    running_shoes: 'Running Shoes',
+    goggles: 'Goggles',
+    starting_fresh: 'Starting fresh — I\'m building from scratch',
+  }
+
+  const baseOptions = ['gps_watch', 'starting_fresh']
+  const sportOptions = []
+  if (answers.sports.includes('triathlon')) {
+    sportOptions.push('bike', 'wetsuit', 'tri_suit')
+  } else {
+    if (answers.sports.includes('cycling')) sportOptions.push('bike', 'cycling_kit', 'cycling_shoes')
+    if (answers.sports.includes('running')) sportOptions.push('running_shoes')
+    if (answers.sports.includes('swimming')) sportOptions.push('wetsuit', 'goggles')
+  }
+  const allOptions = Array.from(new Set([...baseOptions, ...sportOptions]))
+
   function toggle(val: string) {
     if (val === 'starting_fresh') {
       update({ existing_gear: answers.existing_gear.includes('starting_fresh') ? [] : ['starting_fresh'] })
@@ -484,11 +544,12 @@ function Step11({ answers, update }: { answers: WizardAnswers; update: (a: Parti
     const without = answers.existing_gear.filter(v => v !== 'starting_fresh')
     update({ existing_gear: without.includes(val) ? without.filter(v => v !== val) : [...without, val] })
   }
+
   return (
     <div className="space-y-3">
       <p className="text-[#6B7280] text-sm mb-2">Select all that apply.</p>
-      {options.map(o => (
-        <OptionButton key={o.value} label={o.label} selected={answers.existing_gear.includes(o.value)} onClick={() => toggle(o.value)} />
+      {allOptions.map(o => (
+        <OptionButton key={o} label={gearLabels[o]} selected={answers.existing_gear.includes(o)} onClick={() => toggle(o)} />
       ))}
     </div>
   )
@@ -574,7 +635,10 @@ function Step13({ answers, update }: { answers: WizardAnswers; update: (a: Parti
 
 function Step14({ answers, update }: { answers: WizardAnswers; update: (a: Partial<WizardAnswers>) => void }) {
   const hasBike = answers.existing_gear.includes('bike')
-  const hasLongDistance = answers.race_distances.some(d => ['70.3', 'ironman'].includes(d))
+  const hasLongDistance = answers.race_distances.some(d => d.startsWith('tri:') && ['70_3', 'ironman', 'ultra'].some(ld => d.includes(ld)))
+  const showBikeFit = hasBike || hasLongDistance || answers.sports.includes('cycling')
+  const showRunningFit = answers.sports.includes('running') || answers.sports.includes('triathlon')
+  const showSwimmingFit = answers.sports.includes('swimming') || answers.sports.includes('triathlon')
 
   return (
     <div className="space-y-8">
@@ -583,19 +647,29 @@ function Step14({ answers, update }: { answers: WizardAnswers; update: (a: Parti
         <h3 className="font-display text-2xl text-white mb-1">BODY MEASUREMENTS</h3>
         <p className="text-[#6B7280] text-sm mb-4">Stand with a soft tape measure. All fields optional.</p>
         <div className="space-y-4">
-          <MeasurementInput label="Inseam length" tooltip="Floor to crotch along inside of leg" value={answers.inseam_inches} onChange={(v) => update({ inseam_inches: v })} />
-          <MeasurementInput label="Torso length" tooltip="Base of neck (bony bump) down to top of hip bone" value={answers.torso_length_inches} onChange={(v) => update({ torso_length_inches: v })} />
-          <MeasurementInput label="Arm length" tooltip="Tip of shoulder to wrist with arm slightly bent" value={answers.arm_length_inches} onChange={(v) => update({ arm_length_inches: v })} />
-          <MeasurementInput label="Arm span" tooltip="Fingertip to fingertip with arms fully extended" value={answers.arm_span_inches} onChange={(v) => update({ arm_span_inches: v })} />
-          <MeasurementInput label="Shoulder width" tooltip="Outer edge of one shoulder to the other across upper back" value={answers.shoulder_width_inches} onChange={(v) => update({ shoulder_width_inches: v })} />
-          <MeasurementInput label="Chest circumference" tooltip="Around fullest part of chest, tape horizontal" value={answers.chest_circumference_inches} onChange={(v) => update({ chest_circumference_inches: v })} />
-          <MeasurementInput label="Hip circumference" tooltip="Around fullest part of hips, about 8 inches below waist" value={answers.hip_circumference_inches} onChange={(v) => update({ hip_circumference_inches: v })} />
-          <MeasurementInput label="Neck circumference" tooltip="Around base of neck where a shirt collar would sit" value={answers.neck_circumference_inches} onChange={(v) => update({ neck_circumference_inches: v })} />
+          {(showRunningFit || showSwimmingFit) && (
+            <MeasurementInput label="Inseam length" tooltip="Floor to crotch along inside of leg" value={answers.inseam_inches} onChange={(v) => update({ inseam_inches: v })} />
+          )}
+          {(showSwimmingFit || showBikeFit) && (
+            <MeasurementInput label="Torso length" tooltip="Base of neck (bony bump) down to top of hip bone" value={answers.torso_length_inches} onChange={(v) => update({ torso_length_inches: v })} />
+          )}
+          {showSwimmingFit && (
+            <>
+              <MeasurementInput label="Arm length" tooltip="Tip of shoulder to wrist with arm slightly bent" value={answers.arm_length_inches} onChange={(v) => update({ arm_length_inches: v })} />
+              <MeasurementInput label="Arm span" tooltip="Fingertip to fingertip with arms fully extended" value={answers.arm_span_inches} onChange={(v) => update({ arm_span_inches: v })} />
+              <MeasurementInput label="Shoulder width" tooltip="Outer edge of one shoulder to the other across upper back" value={answers.shoulder_width_inches} onChange={(v) => update({ shoulder_width_inches: v })} />
+              <MeasurementInput label="Chest circumference" tooltip="Around fullest part of chest, tape horizontal" value={answers.chest_circumference_inches} onChange={(v) => update({ chest_circumference_inches: v })} />
+              <MeasurementInput label="Neck circumference" tooltip="Around base of neck where a shirt collar would sit" value={answers.neck_circumference_inches} onChange={(v) => update({ neck_circumference_inches: v })} />
+            </>
+          )}
+          {(showSwimmingFit || showRunningFit) && (
+            <MeasurementInput label="Hip circumference" tooltip="Around fullest part of hips, about 8 inches below waist" value={answers.hip_circumference_inches} onChange={(v) => update({ hip_circumference_inches: v })} />
+          )}
         </div>
       </div>
 
-      {/* Bike fit inputs — shown if athlete owns a bike or races long distance */}
-      {(hasBike || hasLongDistance) && (
+      {/* Bike fit inputs — shown if athlete has bike, long distance tri, or cycles */}
+      {showBikeFit && (
         <div>
           <h3 className="font-display text-2xl text-white mb-1">BIKE FIT</h3>
           <div className="space-y-4">
@@ -627,59 +701,64 @@ function Step14({ answers, update }: { answers: WizardAnswers; update: (a: Parti
       )}
 
       {/* Running fit inputs */}
-      <div>
-        <h3 className="font-display text-2xl text-white mb-1">RUNNING FIT</h3>
-        <div className="space-y-4">
-          <div>
-            <p className="text-[#D1D5DB] text-sm mb-3">Foot width preference</p>
-            <div className="space-y-2">
-              {[
-                { label: 'Narrow', value: 'narrow' },
-                { label: 'Standard / medium', value: 'standard' },
-                { label: 'Wide', value: 'wide' },
-                { label: 'Extra wide', value: 'extra_wide' },
-                { label: 'Not sure', value: 'not_sure' },
-              ].map(o => (
-                <OptionButton key={o.value} label={o.label} selected={answers.foot_width === o.value} onClick={() => update({ foot_width: o.value })} />
-              ))}
+      {showRunningFit && (
+        <div>
+          <h3 className="font-display text-2xl text-white mb-1">RUNNING FIT</h3>
+          <div className="space-y-4">
+            <div>
+              <p className="text-[#D1D5DB] text-sm mb-3">Foot width preference</p>
+              <div className="space-y-2">
+                {[
+                  { label: 'Narrow', value: 'narrow' },
+                  { label: 'Standard / medium', value: 'standard' },
+                  { label: 'Wide', value: 'wide' },
+                  { label: 'Extra wide', value: 'extra_wide' },
+                  { label: 'Not sure', value: 'not_sure' },
+                ].map(o => (
+                  <OptionButton key={o.value} label={o.label} selected={answers.foot_width === o.value} onClick={() => update({ foot_width: o.value })} />
+                ))}
+              </div>
             </div>
-          </div>
-          <div>
-            <p className="text-[#D1D5DB] text-sm mb-3">Arch type <span className="text-[#6B7280]">(if known)</span></p>
-            <div className="space-y-2">
-              {[
-                { label: 'Flat / low arch', value: 'flat' },
-                { label: 'Neutral arch', value: 'neutral' },
-                { label: 'High arch', value: 'high' },
-                { label: 'Not sure', value: 'not_sure' },
-              ].map(o => (
-                <OptionButton key={o.value} label={o.label} selected={answers.arch_type === o.value} onClick={() => update({ arch_type: o.value })} />
-              ))}
+            <div>
+              <p className="text-[#D1D5DB] text-sm mb-3">Arch type <span className="text-[#6B7280]">(if known)</span></p>
+              <div className="space-y-2">
+                {[
+                  { label: 'Flat / low arch', value: 'flat' },
+                  { label: 'Neutral arch', value: 'neutral' },
+                  { label: 'High arch', value: 'high' },
+                  { label: 'Not sure', value: 'not_sure' },
+                ].map(o => (
+                  <OptionButton key={o.value} label={o.label} selected={answers.arch_type === o.value} onClick={() => update({ arch_type: o.value })} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
 
 // ─── Step metadata ─────────────────────────────────────────────────────────────
 
-const STEPS: { question: string }[] = [
-  { question: 'What is your primary race distance?' },
-  { question: 'How long have you been doing triathlon?' },
-  { question: 'What sport or activity is your strongest background?' },
-  { question: 'What is your gender?' },
-  { question: 'What is your date of birth?' },
-  { question: 'Where are you based?' },
-  { question: 'What is your height?' },
-  { question: 'What is your weight?' },
-  { question: 'How would you describe your approach to gear spending?' },
-  { question: 'Do you have any known fit issues we should factor in?' },
-  { question: 'What triathlon gear do you already own?' },
-  { question: 'Tell us about your racing profile.' },
-  { question: 'Do you have a specific race in mind?' },
-]
+const QUESTION_BY_KEY: Record<string, string> = {
+  sports: 'What sport(s) do you race or train for?',
+  current_focus_sport: 'Which sport are you currently focused on?',
+  race_distances: 'What are your race distances?',
+  experience_level: 'How long have you been training in your sport?',
+  background_sport: 'What sport or activity is your strongest background?',
+  gender: 'What is your gender?',
+  date_of_birth: 'What is your date of birth?',
+  country: 'Where are you based?',
+  height: 'What is your height?',
+  weight: 'What is your weight?',
+  budget_style: 'How would you describe your approach to gear spending?',
+  fit_issues: 'Do you have any known fit issues we should factor in?',
+  existing_gear: 'What gear do you already own?',
+  racing_profile: 'Tell us about your racing profile.',
+  target_race: 'Do you have a specific race in mind?',
+  optional_measurements: 'Optional: precise measurements',
+}
 
 // ─── Main wizard ──────────────────────────────────────────────────────────────
 
@@ -691,7 +770,15 @@ export function OnboardingWizard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const isOptionalStep = step === 14
+  const stepKeys = useMemo(() => {
+    const base = ['sports']
+    if (answers.sports.length > 1) base.push('current_focus_sport')
+    base.push('race_distances', 'experience_level', 'background_sport', 'gender', 'date_of_birth', 'country', 'height', 'weight', 'budget_style', 'fit_issues', 'existing_gear', 'racing_profile', 'target_race', 'optional_measurements')
+    return base
+  }, [answers.sports.length])
+
+  const TOTAL_REQUIRED_STEPS = stepKeys.length - 1
+  const isOptionalStep = step === stepKeys.length
   const progressPct = Math.min((step / TOTAL_REQUIRED_STEPS) * 100, 100)
 
   function update(partial: Partial<WizardAnswers>) {
@@ -718,10 +805,14 @@ export function OnboardingWizard() {
     const fit_issues = answers.fit_issues.filter(v => v !== 'none')
     const existing_gear = answers.existing_gear.filter(v => v !== 'starting_fresh')
 
+    // If single sport, ensure current_focus_sport is set
+    const current_focus_sport = answers.sports.length === 1 ? answers.sports[0] : answers.current_focus_sport
+
     const payload = {
       ...answers,
       fit_issues,
       existing_gear,
+      current_focus_sport,
       height_feet: answers.height_feet,
       height_inches: answers.height_inches,
       weight_lbs: answers.weight_lbs,
@@ -735,20 +826,37 @@ export function OnboardingWizard() {
       neck_circumference_inches: answers.neck_circumference_inches || null,
     }
 
-    const result = await saveProfile(payload)
-
-    if (result?.error) {
-      setSubmitError(result.error)
+    try {
+      const result = await saveProfile(payload)
+      if (result?.error) {
+        setSubmitError(result.error)
+      } else if (result?.fieldErrors) {
+        const fields = Object.entries(result.fieldErrors)
+        const summary = fields
+          .map(([field, errs]) => `${field}: ${(errs as string[])?.[0] ?? 'invalid'}`)
+          .join('; ')
+        setSubmitError(`Please complete: ${summary}`)
+        console.error('[onboarding] field errors:', result.fieldErrors)
+      }
+    } catch (e) {
+      // redirect() throws NEXT_REDIRECT which we want to bubble; anything else is a real error
+      if (e instanceof Error && e.message.includes('NEXT_REDIRECT')) throw e
+      setSubmitError(e instanceof Error ? e.message : 'Unknown error')
+      console.error('[onboarding] submit error:', e)
+    } finally {
       setIsSubmitting(false)
     }
-    // On success saveProfile calls redirect() — no need to handle here
   }
 
-  const ready = canAdvance(step, answers)
+  const ready = canAdvance(step, answers, stepKeys)
 
   const slideClass = direction === 'forward'
     ? 'animate-slide-in-forward'
     : 'animate-slide-in-back'
+
+  const stepQuestion = step <= stepKeys.length
+    ? QUESTION_BY_KEY[stepKeys[step - 1]] ?? ''
+    : ''
 
   return (
     <div className="min-h-screen flex flex-col px-4 py-8 max-w-lg mx-auto w-full">
@@ -782,7 +890,7 @@ export function OnboardingWizard() {
           <h1 className="font-display text-4xl md:text-5xl text-white mb-6 leading-tight">
             {isOptionalStep
               ? 'OPTIONAL: GET MORE PRECISE RECOMMENDATIONS'
-              : STEPS[step - 1].question.toUpperCase()}
+              : stepQuestion.toUpperCase()}
           </h1>
 
           {isOptionalStep && (
@@ -791,21 +899,23 @@ export function OnboardingWizard() {
             </p>
           )}
 
-          {/* Render step */}
-          {step === 1 && <Step1 answers={answers} update={update} />}
-          {step === 2 && <Step2 answers={answers} update={update} />}
-          {step === 3 && <Step3 answers={answers} update={update} />}
-          {step === 4 && <Step4 answers={answers} update={update} />}
-          {step === 5 && <Step5 answers={answers} update={update} />}
-          {step === 6 && <Step6 answers={answers} update={update} />}
-          {step === 7 && <Step7 answers={answers} update={update} />}
-          {step === 8 && <Step8 answers={answers} update={update} />}
-          {step === 9 && <Step9 answers={answers} update={update} />}
-          {step === 10 && <Step10 answers={answers} update={update} />}
-          {step === 11 && <Step11 answers={answers} update={update} />}
-          {step === 12 && <Step12 answers={answers} update={update} />}
-          {step === 13 && <Step13 answers={answers} update={update} />}
-          {step === 14 && <Step14 answers={answers} update={update} />}
+          {/* Render step based on stepKey */}
+          {stepKeys[step - 1] === 'sports' && <NewStep0SportsSelector answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'current_focus_sport' && <NewStep1CurrentFocusSelector answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'race_distances' && <StepRaceDistances answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'experience_level' && <Step2 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'background_sport' && <Step3 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'gender' && <Step4 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'date_of_birth' && <Step5 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'country' && <Step6 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'height' && <Step7 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'weight' && <Step8 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'budget_style' && <Step9 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'fit_issues' && <Step10 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'existing_gear' && <Step11 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'racing_profile' && <Step12 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'target_race' && <Step13 answers={answers} update={update} />}
+          {stepKeys[step - 1] === 'optional_measurements' && <Step14 answers={answers} update={update} />}
         </div>
       </div>
 
@@ -830,7 +940,7 @@ export function OnboardingWizard() {
         )}
 
         <div className="flex-1 flex gap-3 justify-end">
-          {/* Skip button on step 14 only */}
+          {/* Skip button on optional step only */}
           {isOptionalStep && (
             <button
               type="button"
@@ -843,7 +953,7 @@ export function OnboardingWizard() {
           )}
 
           {/* Primary CTA */}
-          {step < 13 && (
+          {!isOptionalStep && (
             <button
               type="button"
               onClick={goNext}
@@ -854,17 +964,7 @@ export function OnboardingWizard() {
             </button>
           )}
 
-          {step === 13 && (
-            <button
-              type="button"
-              onClick={goNext}
-              disabled={!ready}
-              className="bg-[#FF6B35] hover:bg-[#E55A24] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px]"
-            >
-              Continue
-            </button>
-          )}
-
+          {/* Final submit button */}
           {isOptionalStep && (
             <button
               type="button"

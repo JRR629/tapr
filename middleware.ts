@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/reset')
-  const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/gear') || pathname.startsWith('/profile') || pathname.startsWith('/billing') || pathname.startsWith('/admin') || pathname.startsWith('/onboarding')
+  const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/gear') || pathname.startsWith('/profile') || pathname.startsWith('/billing') || pathname.startsWith('/admin') || pathname.startsWith('/onboarding') || pathname.startsWith('/compare') || pathname.startsWith('/settings')
 
   // Redirect authenticated users away from auth pages to dashboard
   if (user && isAuthRoute) {

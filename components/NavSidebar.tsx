@@ -52,25 +52,53 @@ function NavContent({ pathname, onNavigate, userEmail }: { pathname: string; onN
         })}
       </div>
 
-      <div className="px-4 py-4 border-t border-[#1A3A5C] space-y-2">
+      <div className="px-3 pt-3 pb-4 border-t border-[#1A3A5C]">
+
+        {/* User identity */}
+        {userEmail && (
+          <div className="flex items-center gap-2.5 px-4 py-2 mb-0.5">
+            <div className="w-6 h-6 rounded-full bg-[#0A1628] border border-[#1A3A5C] flex items-center justify-center flex-shrink-0">
+              <span className="text-[10px] font-bold text-[#FF6B35] uppercase leading-none select-none">
+                {userEmail.charAt(0)}
+              </span>
+            </div>
+            <span className="text-[#6B7280] text-[11px] truncate leading-none font-medium" title={userEmail}>
+              {userEmail}
+            </span>
+          </div>
+        )}
+
+        {/* Settings */}
         <Link
           href="/settings"
           onClick={onNavigate}
-          className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all text-sm min-h-[44px] ${
+          className={`group flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 text-sm min-h-[44px] border-l-2 ${
             pathname.startsWith('/settings') || pathname.startsWith('/profile') || pathname.startsWith('/billing')
-              ? 'text-[#FF6B35]'
-              : 'text-[#6B7280] hover:text-white hover:bg-[#ffffff08]'
+              ? 'border-[#FF6B35] text-[#FF6B35] bg-[#FF6B3508] pl-[14px]'
+              : 'border-transparent text-[#6B7280] hover:text-white hover:bg-[#ffffff08]'
           }`}
         >
-          <Settings size={16} />
+          <Settings size={16} className="flex-shrink-0 transition-transform duration-300 group-hover:rotate-45" />
           <span>Settings</span>
         </Link>
-        {userEmail && (
-          <p className="text-[#6B7280] text-xs truncate px-1" title={userEmail}>
-            {userEmail}
-          </p>
-        )}
-        <SignOutButton className="w-full text-left" />
+
+        {/* Sign Out */}
+        <SignOutButton className="w-full px-4 rounded-md border-l-2 border-transparent hover:bg-[#EF444408]" />
+
+        {/* Legal micro-links */}
+        <div className="flex items-center gap-2 px-4 pt-2">
+          <Link href="/privacy" onClick={onNavigate} className="text-[#6B7280] hover:text-[#D1D5DB] text-[10px] transition-colors tracking-wide">
+            Privacy
+          </Link>
+          <span className="text-[#1A3A5C] text-[10px]">·</span>
+          <Link href="/terms" onClick={onNavigate} className="text-[#6B7280] hover:text-[#D1D5DB] text-[10px] transition-colors tracking-wide">
+            Terms
+          </Link>
+          <span className="text-[#1A3A5C] text-[10px]">·</span>
+          <Link href="/contact" onClick={onNavigate} className="text-[#6B7280] hover:text-[#D1D5DB] text-[10px] transition-colors tracking-wide">
+            Contact
+          </Link>
+        </div>
       </div>
     </>
   )

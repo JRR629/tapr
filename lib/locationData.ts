@@ -1,6 +1,6 @@
 // Shared location data for country/state dropdowns
 
-export const TRIATHLON_COUNTRIES = [
+export const SUPPORTED_COUNTRIES = [
   { value: 'US', label: 'United States' },
   { value: 'CA', label: 'Canada' },
   { value: 'AU', label: 'Australia' },
@@ -119,7 +119,7 @@ export const AU_STATES = [
   { value: 'WA',  label: 'Western Australia' },
 ]
 
-export type CountryCode = typeof TRIATHLON_COUNTRIES[number]['value']
+export type CountryCode = typeof SUPPORTED_COUNTRIES[number]['value']
 
 /** Returns dropdown options + label for the state/province field based on country */
 export function getRegionConfig(country: string): {

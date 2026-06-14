@@ -15,7 +15,7 @@ export default function GPSWatchGuidePage() {
           The Best GPS Watch for Triathlon in 2025 — And How to Choose the Right One for You
         </h1>
         <div className="text-[#D1D5DB] text-lg leading-relaxed mb-12 border-l-2 border-[#FF6B35] pl-5">
-          Most "best GPS watch" lists give you a ranking and call it a day. The problem is that the right watch for a first-time sprint triathlete on a $300 budget is completely different from the right watch for someone training for their third Ironman with a power meter and a Garmin Edge on their TT bike. This guide explains what actually matters — and at the end, shows you how to get a recommendation built around your specific situation.
+          Most &quot;best GPS watch&quot; lists give you a ranking and call it a day. The problem is that the right watch for a first-time sprint triathlete on a $300 budget is completely different from the right watch for someone training for their third Ironman with a power meter and a Garmin Edge on their TT bike. This guide explains what actually matters — and at the end, shows you how to get a recommendation built around your specific situation.
         </div>
 
         <section>
@@ -26,7 +26,7 @@ export default function GPSWatchGuidePage() {
 
           <h3 className="text-white font-semibold text-lg mt-6 mb-2">Triathlon mode and auto-transitions</h3>
           <p className="text-[#D1D5DB] leading-relaxed mb-4">
-            A dedicated triathlon watch sequences swim → T1 → bike → T2 → run in a single activity, with a single button press between disciplines. Without it, you're fumbling with menus in transition while the clock runs. If you're racing any event from sprint to Ironman, this is non-negotiable.
+            A dedicated triathlon watch sequences swim → T1 → bike → T2 → run in a single activity, with a single button press between disciplines. Without it, you&apos;re fumbling with menus in transition while the clock runs. If you&apos;re racing any event from sprint to Ironman, this is non-negotiable.
           </p>
 
           <h3 className="text-white font-semibold text-lg mt-6 mb-2">Battery life matched to your race distance</h3>
@@ -36,7 +36,7 @@ export default function GPSWatchGuidePage() {
 
           <h3 className="text-white font-semibold text-lg mt-6 mb-2">GPS accuracy in the water</h3>
           <p className="text-[#D1D5DB] leading-relaxed mb-4">
-            Open water swimming is the hardest environment for GPS. Dual-frequency GPS (L1/L5) has become the standard for premium watches and produces meaningfully better tracks than single-frequency. If you're racing point-to-point open water swims, this matters more than a pool environment.
+            Open water swimming is the hardest environment for GPS. Dual-frequency GPS (L1/L5) has become the standard for premium watches and produces meaningfully better tracks than single-frequency. If you&apos;re racing point-to-point open water swims, this matters more than a pool environment.
           </p>
 
           <h3 className="text-white font-semibold text-lg mt-6 mb-2">Power meter compatibility</h3>
@@ -53,39 +53,39 @@ export default function GPSWatchGuidePage() {
         <section>
           <h2 className="font-display text-3xl text-white mt-12 mb-4">Top Picks by Situation</h2>
           <p className="text-[#D1D5DB] leading-relaxed mb-4">
-            These aren't universal rankings. They're starting points based on common profiles.
+            These aren&apos;t universal rankings. They&apos;re starting points based on common profiles.
           </p>
 
           <h3 className="text-white font-semibold text-lg mt-6 mb-2">Best overall for Ironman athletes: Garmin Forerunner 965</h3>
           <p className="text-[#D1D5DB] leading-relaxed mb-4">
-            31 hours of GPS battery, dual-frequency GPS, full triathlon mode with auto-transitions, robust power meter support, and the deepest ecosystem of any triathlon watch. The AMOLED display is excellent in sunlight. At $599, it's expensive — but it's the benchmark everything else is compared against. If you're serious about long-course racing and want a watch that won't be the limiting factor on race day, this is the one.
+            31 hours of GPS battery, dual-frequency GPS, full triathlon mode with auto-transitions, robust power meter support, and the deepest ecosystem of any triathlon watch. The AMOLED display is excellent in sunlight. At $599, it&apos;s expensive — but it&apos;s the benchmark everything else is compared against. If you&apos;re serious about long-course racing and want a watch that won&apos;t be the limiting factor on race day, this is the one.
           </p>
 
           <h3 className="text-white font-semibold text-lg mt-6 mb-2">Best value without compromise: COROS PACE 3</h3>
           <p className="text-[#D1D5DB] leading-relaxed mb-4">
-            $229 and it does almost everything the Forerunner 965 does for triathlon racing. Triathlon mode, excellent GPS accuracy, 38 hours of battery, power meter support. The training platform is less polished than Garmin Connect and the smartwatch features are minimal. But if you want race-day performance without paying for lifestyle features you won't use, the PACE 3 is exceptional value.
+            $229 and it does almost everything the Forerunner 965 does for triathlon racing. Triathlon mode, excellent GPS accuracy, 38 hours of battery, power meter support. The training platform is less polished than Garmin Connect and the smartwatch features are minimal. But if you want race-day performance without paying for lifestyle features you won&apos;t use, the PACE 3 is exceptional value.
           </p>
 
           <h3 className="text-white font-semibold text-lg mt-6 mb-2">Best for data-driven training: Polar Vantage V3</h3>
           <p className="text-[#D1D5DB] leading-relaxed mb-4">
-            Polar's training science is the best in the industry for athletes who take recovery and load management seriously. Running Power, Training Load Pro, and Nightly Recharge give you a level of physiological insight that Garmin approximates but doesn't match. The Vantage V3 is also the only triathlon watch with a built-in ECG. The tradeoff: Polar's ecosystem is smaller, and the watch has fewer app integrations.
+            Polar&apos;s training science is the best in the industry for athletes who take recovery and load management seriously. Running Power, Training Load Pro, and Nightly Recharge give you a level of physiological insight that Garmin approximates but doesn&apos;t match. The Vantage V3 is also the only triathlon watch with a built-in ECG. The tradeoff: Polar&apos;s ecosystem is smaller, and the watch has fewer app integrations.
           </p>
 
           <h3 className="text-white font-semibold text-lg mt-6 mb-2">Best for navigation and adventure: Suunto Race</h3>
           <p className="text-[#D1D5DB] leading-relaxed mb-4">
-            If your training involves long road rides on unfamiliar routes or trail runs, Suunto's navigation and mapping is class-leading — offline maps, up to 16GB of storage, and genuinely beautiful route visualization. The triathlon mode is solid. For athletes who race in remote or destination events, this is worth serious consideration.
+            If your training involves long road rides on unfamiliar routes or trail runs, Suunto&apos;s navigation and mapping is class-leading — offline maps, up to 16GB of storage, and genuinely beautiful route visualization. The triathlon mode is solid. For athletes who race in remote or destination events, this is worth serious consideration.
           </p>
 
           <h3 className="text-white font-semibold text-lg mt-6 mb-2">What about Apple Watch?</h3>
           <p className="text-[#D1D5DB] leading-relaxed mb-4">
-            Apple Watch Ultra 2 is genuinely capable for triathlon at shorter distances. The battery holds for Olympic distance with careful settings management. But it doesn't support ANT+ power meters, multi-bike profiles are manual, and the ecosystem is built around everyday life first, sport second. For Ironman or power-meter athletes, you'll feel the gaps.
+            Apple Watch Ultra 2 is genuinely capable for triathlon at shorter distances. The battery holds for Olympic distance with careful settings management. But it doesn&apos;t support ANT+ power meters, multi-bike profiles are manual, and the ecosystem is built around everyday life first, sport second. For Ironman or power-meter athletes, you&apos;ll feel the gaps.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-3xl text-white mt-12 mb-4">The Variables That Change Everything</h2>
           <p className="text-[#D1D5DB] leading-relaxed mb-4">
-            Here's what the generic lists don't account for:
+            Here&apos;s what the generic lists don&apos;t account for:
           </p>
 
           <div className="text-[#D1D5DB] leading-relaxed space-y-4">
@@ -96,10 +96,10 @@ export default function GPSWatchGuidePage() {
               <strong>Your existing devices</strong> matter more than most people realize. A Garmin Edge on your bike means Garmin Connect handles all your training data in one place — switching to Polar or COROS creates sync complexity.
             </p>
             <p>
-              <strong>Your budget style</strong> shapes the decision. A "best performance per dollar" athlete and a "buy once, buy right" athlete should end up with different watches even at the same budget ceiling.
+              <strong>Your budget style</strong> shapes the decision. A &quot;best performance per dollar&quot; athlete and a &quot;buy once, buy right&quot; athlete should end up with different watches even at the same budget ceiling.
             </p>
             <p>
-              <strong>Multi-bike setup</strong> is a surprisingly important filter. Athletes with separate road and TT bikes need per-bike sensor profiles and calibration storage. Garmin handles this best. It's a dealbreaker-level gap on Apple Watch.
+              <strong>Multi-bike setup</strong> is a surprisingly important filter. Athletes with separate road and TT bikes need per-bike sensor profiles and calibration storage. Garmin handles this best. It&apos;s a dealbreaker-level gap on Apple Watch.
             </p>
           </div>
         </section>

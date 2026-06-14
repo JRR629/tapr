@@ -119,10 +119,12 @@ function RunnerUpRow({
   product,
   categorySlug,
   rank,
+  label,
 }: {
   product: ComparisonProductAnalysis
   categorySlug: string
   rank: number
+  label?: string
 }) {
   const [open, setOpen] = useState(false)
 
@@ -135,7 +137,7 @@ function RunnerUpRow({
         <div className="flex flex-col gap-1.5 flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[#6B7280] text-xs font-semibold uppercase tracking-wide">
-              #{rank}
+              {label ?? `#${rank}`}
             </span>
             {product.isExternal && (
               <span className="bg-[#F59E0B15] text-[#F59E0B] border border-[#F59E0B40] text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide flex items-center gap-1">
@@ -283,16 +285,19 @@ export function ComparisonResultCard({ result, categorySlug }: ComparisonResultC
         </div>
       </div>
 
-      {/* ── OTHER OPTIONS (accordion) ── */}
+      {/* ── RUNNER-UP / OTHER OPTIONS (accordion) ── */}
       {runners.length > 0 && (
         <div className="flex flex-col gap-3">
-          <p className="text-[#6B7280] text-xs uppercase tracking-wide font-semibold">Other Options</p>
+          <p className="text-[#6B7280] text-xs uppercase tracking-wide font-semibold">
+            {runners.length === 1 ? 'Runner-Up' : 'Other Options'}
+          </p>
           {runners.map((product, i) => (
             <RunnerUpRow
               key={product.productName}
               product={product}
               categorySlug={categorySlug}
               rank={i + 2}
+              label={runners.length === 1 ? 'Runner-Up' : undefined}
             />
           ))}
         </div>

@@ -1,9 +1,16 @@
 import Link from 'next/link'
 import { User, CreditCard } from 'lucide-react'
+import SignOutButton from '@/components/auth/SignOutButton'
 
 export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-1.5 text-[#6B7280] hover:text-white text-sm transition-colors mb-6"
+      >
+        <span>←</span> Back to Dashboard
+      </Link>
       <h1 className="font-display text-5xl text-white mb-2">SETTINGS</h1>
       <p className="text-[#6B7280] text-base mb-10">Manage your profile, preferences, and billing.</p>
 
@@ -17,7 +24,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <p className="text-white font-semibold group-hover:text-[#FF6B35] transition-colors">My Profile</p>
-            <p className="text-[#6B7280] text-sm">Race distances, body stats, fit issues, and gear preferences.</p>
+            <p className="text-[#6B7280] text-sm">Event types, body stats, fit issues, and gear preferences.</p>
           </div>
         </Link>
 
@@ -33,6 +40,12 @@ export default function SettingsPage() {
             <p className="text-[#6B7280] text-sm">Manage your subscription, payment method, and invoices.</p>
           </div>
         </Link>
+      </div>
+
+      <div className="mt-2 border-t border-[#1A3A5C] pt-4">
+        <div className="px-2">
+          <SignOutButton className="w-full px-4 rounded-md text-sm border border-[#1A3A5C] hover:border-[#EF4444] text-[#6B7280] hover:text-[#EF4444] transition-colors" />
+        </div>
       </div>
 
       <footer className="text-center text-[#6B7280] text-xs py-6 border-t border-[#1A3A5C] mt-12">
