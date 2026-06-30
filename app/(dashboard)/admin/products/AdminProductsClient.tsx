@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { DateSelect } from '@/components/DateSelect'
 import type { GearCategory } from '@/types/gear'
 import type { GearProductWithReviews, ReviewSource } from '@/types/gear'
 
@@ -343,11 +344,11 @@ function ReviewSourceForm({
         </div>
         <div>
           <label className="block text-gray-300 text-xs mb-1">Review Date</label>
-          <input
-            type="date"
+          <DateSelect
             value={source.review_date}
-            onChange={(e) => update('review_date', e.target.value)}
-            className="w-full bg-[#0F2040] border border-[#1A3A5C] text-white rounded-md px-3 py-2 text-sm focus:border-[#FF6B35] focus:outline-none min-h-[44px]"
+            onChange={(v) => update('review_date', v)}
+            range="recent"
+            ariaPrefix="Review"
           />
         </div>
         <div>

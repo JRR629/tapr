@@ -17,9 +17,9 @@ Run before the **June 30** launch. Structure adapted from a council (Perplexity)
 ## A. Critical path — must pass or DO NOT LAUNCH (P0)
 
 ### Auth & onboarding
-- [ ] **A1 — Signup grants 3 credits.** New email → signup → (verify email or auto-confirm) → logged in. Header shows **3 credits**. DB: `auth.users` row + `user_credits.credits_remaining = 3`; no `athlete_profiles` row yet.
+- [x] **A1 — Signup grants 3 credits.** ✅ VERIFIED 2026-06-30 (preview). New account got `credits_remaining = 3`, ledger `signup_grant:3`, no profile — trigger works AFTER the credit-function security lockdown. (Initial confusion was a stale session showing an old 9974-credit test account; re-test with a clean email showed 3.)
 - [ ] **A2 — Login / logout / protected routes.** Logged out, hit `/dashboard` directly → redirected to `/login`. Log in → loads. Log out → header anonymous, protected route redirects again. (Middleware uses `supabase.auth.getUser()`.)
-- [ ] **A3 — Onboarding completes & persists.** Finish the full wizard → lands on dashboard. Reload → not re-shown. DB: one `athlete_profiles` row for the user with fields populated.
+- [~] **A3 — Onboarding completes & persists.** 🐛 GAP FOUND + FIXED 2026-06-30: onboarding was only triggered by the post-signup redirect — a profile-less user who logged in later (or abandoned onboarding) reached the dashboard with no prompt. FIX (commit 1cce1bd): `(dashboard)/layout.tsx` now redirects any authenticated, profile-less user to `/onboarding` for every app route. **RE-TEST on the rebuilt preview:** log in with a profile-less account → should land on onboarding; complete it → lands on dashboard, not re-shown on reload; DB has one `athlete_profiles` row.
 
 ### Credits & recommendations (HIGHEST RISK)
 - [ ] **A4 — Credit deducts once, before the AI call.** With 3 credits, run one recommendation. Balance → 2. DB: exactly one `credit_transactions` row `amount = -1, reason = 'recommendation'`. Refresh mid-stream does NOT double-deduct.
@@ -31,7 +31,8 @@ Run before the **June 30** launch. Structure adapted from a council (Perplexity)
 - [ ] **A8 — Compare cost + hard cap.** 2 products = 1 credit; 3–4 = 2 credits; selecting a 5th is rejected server-side (`/api/compare` caps at 4). DB ledger shows correct deduction.
 - [ ] **A8b — Quick-compare is FREE.** From a recommendation, compare its top pick + one other → **0 credits** deducted (the quick-compare path). *(Council missed this — verify it.)*
 
-### Payments (HIGHEST RISK — Stripe TEST mode)
+### Payments (HIGHEST RISK)
+> **DECISION (2026-06-30):** Skipping Stripe TEST-mode setup on the preview. A9–A11 are **deferred to the F7 live-money test** done right after launch (real $2.99 purchase by founder + webhook replay + refund). ⚠️ **Until F7 passes, the purchase flow is NOT verified end-to-end — watch the first real purchase closely.** Grant logic + idempotency ARE verified at the DB level (unique index + dedupe).
 - [ ] **A9 — Pack purchase → credits granted.** Buy each pack (3/10/25) with a Stripe test card → balance increases by pack size. DB: `credit_transactions` row with the `stripe_session_id`, `reason = 'pack_N'`.
 - [ ] **A10 — Webhook idempotency (deliberate replay).** In Stripe dashboard, **resend** the same `checkout.session.completed` event. Expect: **no second grant**, balance unchanged. (Backed by the partial unique index on `credit_transactions.stripe_session_id` + `ON CONFLICT DO NOTHING`.)
 - [ ] **A11 — Grant-failure alert.** Temporarily break the grant (e.g. bad RPC) on a test event → founder gets a Resend email + Sentry event; webhook returns 500 (Stripe will retry).

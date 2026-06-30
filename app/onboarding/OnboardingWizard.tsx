@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { SUPPORTED_COUNTRIES, getRegionConfig } from '@/lib/locationData'
 import { SPORTS, SPORT_LABELS, type Sport } from '@/lib/sports'
 import { RaceDistancesField } from '@/components/RaceDistancesField'
+import { DateSelect } from '@/components/DateSelect'
 import { saveProfile } from './actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -312,75 +313,15 @@ function Step4({ answers, update }: { answers: WizardAnswers; update: (a: Partia
 }
 
 function Step5({ answers, update }: { answers: WizardAnswers; update: (a: Partial<WizardAnswers>) => void }) {
-  // Three themed dropdowns (Month / Day / Year) instead of a native <input type="date">.
-  // The native date picker's popup is browser-controlled (unthemeable, inconsistent,
-  // finicky). Dropdowns are fully on-theme and become native wheel pickers on mobile.
-  // Stores YYYY-MM-DD only when all three are chosen; '' otherwise (so the step's
-  // completion check requires a full date).
-  const parts = (answers.date_of_birth || '').split('-')
-  const [year, setYear] = useState(parts[0] ?? '')
-  const [month, setMonth] = useState(parts[1] ?? '')
-  const [day, setDay] = useState(parts[2] ?? '')
-
-  const currentYear = new Date().getFullYear()
-  const months: [string, string][] = [
-    ['01', 'January'], ['02', 'February'], ['03', 'March'], ['04', 'April'],
-    ['05', 'May'], ['06', 'June'], ['07', 'July'], ['08', 'August'],
-    ['09', 'September'], ['10', 'October'], ['11', 'November'], ['12', 'December'],
-  ]
-  // Ages ~13–100.
-  const years = Array.from({ length: 88 }, (_, i) => String(currentYear - 13 - i))
-  const daysInMonth = (yy: string, mm: string) =>
-    yy && mm ? new Date(Number(yy), Number(mm), 0).getDate() : 31
-  const days = Array.from({ length: daysInMonth(year, month) }, (_, i) =>
-    String(i + 1).padStart(2, '0')
-  )
-
-  const sync = (yy: string, mm: string, dd: string) => {
-    // Clamp day if the new month/year has fewer days (e.g. switching to February).
-    const maxD = daysInMonth(yy, mm)
-    if (dd && Number(dd) > maxD) {
-      dd = String(maxD).padStart(2, '0')
-      setDay(dd)
-    }
-    update({ date_of_birth: yy && mm && dd ? `${yy}-${mm}-${dd}` : '' })
-  }
-
-  const selectCls =
-    'w-full bg-[#0A1628] border border-[#1A3A5C] text-white rounded-md px-3 py-3 focus:border-[#FF6B35] focus:outline-none focus:shadow-[0_0_0_3px_rgba(255,107,53,0.15)] transition-all min-h-[44px] [color-scheme:dark] cursor-pointer'
-
   return (
     <div className="space-y-3">
       <p className="text-[#6B7280] text-sm">Used to calculate your age for age-group context and masters athlete recommendations (50+).</p>
-      <div className="grid grid-cols-3 gap-3">
-        <select
-          aria-label="Birth month"
-          value={month}
-          onChange={(e) => { setMonth(e.target.value); sync(year, e.target.value, day) }}
-          className={selectCls}
-        >
-          <option value="">Month</option>
-          {months.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
-        <select
-          aria-label="Birth day"
-          value={day}
-          onChange={(e) => { setDay(e.target.value); sync(year, month, e.target.value) }}
-          className={selectCls}
-        >
-          <option value="">Day</option>
-          {days.map((v) => <option key={v} value={v}>{Number(v)}</option>)}
-        </select>
-        <select
-          aria-label="Birth year"
-          value={year}
-          onChange={(e) => { setYear(e.target.value); sync(e.target.value, month, day) }}
-          className={selectCls}
-        >
-          <option value="">Year</option>
-          {years.map((v) => <option key={v} value={v}>{v}</option>)}
-        </select>
-      </div>
+      <DateSelect
+        value={answers.date_of_birth}
+        onChange={(v) => update({ date_of_birth: v })}
+        range="past"
+        ariaPrefix="Birth"
+      />
     </div>
   )
 }
@@ -679,11 +620,11 @@ function Step13({ answers, update }: { answers: WizardAnswers; update: (a: Parti
           </div>
           <div>
             <label className="block text-[#D1D5DB] text-sm mb-1.5">Target race date <span className="text-[#6B7280]">(optional)</span></label>
-            <input
-              type="date"
+            <DateSelect
               value={answers.target_race_date}
-              onChange={(e) => update({ target_race_date: e.target.value })}
-              className="w-full bg-[#0A1628] border border-[#1A3A5C] text-white rounded-md px-4 py-3 focus:border-[#FF6B35] focus:outline-none focus:shadow-[0_0_0_3px_rgba(255,107,53,0.15)] transition-all min-h-[44px] [color-scheme:dark]"
+              onChange={(v) => update({ target_race_date: v })}
+              range="future"
+              ariaPrefix="Race"
             />
           </div>
         </div>

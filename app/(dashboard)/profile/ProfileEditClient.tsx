@@ -8,6 +8,7 @@ import type { AthleteProfile } from '@/types/profile'
 import { SUPPORTED_COUNTRIES, getRegionConfig } from '@/lib/locationData'
 import { SPORTS, SPORT_LABELS, type Sport } from '@/lib/sports'
 import { RaceDistancesField } from '@/components/RaceDistancesField'
+import { DateSelect } from '@/components/DateSelect'
 
 interface ProfileEditClientProps {
   profile: AthleteProfile | null
@@ -316,11 +317,11 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
 
           <div>
             <label className={labelClass}>Target Race Date</label>
-            <input
-              type="date"
+            <DateSelect
               value={form.target_race_date ?? ''}
-              onChange={(e) => setField('target_race_date', e.target.value)}
-              className={inputClass}
+              onChange={(v) => setField('target_race_date', v)}
+              range="future"
+              ariaPrefix="Race"
             />
           </div>
         </div>
@@ -347,11 +348,11 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
 
           <div>
             <label className={labelClass}>Date of Birth</label>
-            <input
-              type="date"
+            <DateSelect
               value={form.date_of_birth ?? ''}
-              onChange={(e) => setField('date_of_birth', e.target.value)}
-              className={inputClass}
+              onChange={(v) => setField('date_of_birth', v)}
+              range="past"
+              ariaPrefix="Birth"
             />
           </div>
 
