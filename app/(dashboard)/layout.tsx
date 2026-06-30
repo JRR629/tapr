@@ -1,8 +1,26 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { HeaderController } from '@/components/HeaderController'
 import { CompactHeader } from '@/components/CompactHeader'
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Enforce onboarding for the whole app: any authenticated user without an
+  // athlete profile is sent to /onboarding, no matter how they entered (login,
+  // direct nav, or abandoning onboarding and returning). /onboarding lives
+  // outside this (dashboard) group, so there's no redirect loop. Middleware
+  // already guarantees auth on these routes.
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: profile } = await supabase
+      .from('athlete_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (!profile) redirect('/onboarding')
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0A1628]">
       <HeaderController><CompactHeader /></HeaderController>
