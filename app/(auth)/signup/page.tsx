@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { track } from '@vercel/analytics'
 import { createClient } from '@/lib/supabase/client'
 
 export default function SignupPage() {
@@ -45,6 +46,9 @@ export default function SignupPage() {
       setIsLoading(false)
       return
     }
+
+    // Account created (both auto-confirm and email-verify paths reach here).
+    track('sign_up')
 
     // Supabase sends a confirmation email by default
     // Check if auto-confirm is enabled in Supabase — if so, redirect straight to onboarding
@@ -112,18 +116,19 @@ export default function SignupPage() {
         {/* Card */}
         <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-8">
           <h1 className="font-display text-4xl text-white mb-2 tracking-wide">CREATE ACCOUNT</h1>
-          <p className="text-[#6B7280] text-sm mb-6">Free to start. 3 recommendations per day.</p>
+          <p className="text-[#6B7280] text-sm mb-6">Free to start. 3 free credits included.</p>
 
           {error && (
-            <div className="bg-[#EF444420] border border-[#EF4444] text-[#EF4444] text-sm rounded-md px-4 py-3 mb-5">
+            <div role="alert" className="bg-[#EF444420] border border-[#EF4444] text-[#EF4444] text-sm rounded-md px-4 py-3 mb-5">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[#D1D5DB] text-sm mb-1.5">Email</label>
+              <label htmlFor="email" className="block text-[#D1D5DB] text-sm mb-1.5">Email</label>
               <input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -135,8 +140,9 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-[#D1D5DB] text-sm mb-1.5">Password</label>
+              <label htmlFor="password" className="block text-[#D1D5DB] text-sm mb-1.5">Password</label>
               <input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -148,8 +154,9 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-[#D1D5DB] text-sm mb-1.5">Confirm Password</label>
+              <label htmlFor="confirmPassword" className="block text-[#D1D5DB] text-sm mb-1.5">Confirm Password</label>
               <input
+                id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

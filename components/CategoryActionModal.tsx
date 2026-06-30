@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Sparkles, GitCompareArrows, X } from 'lucide-react'
 import type { GearCategory } from '@/types/gear'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface CategoryActionModalProps {
   category: GearCategory | null
@@ -12,6 +13,7 @@ interface CategoryActionModalProps {
 
 export function CategoryActionModal({ category, onClose }: CategoryActionModalProps) {
   const [visible, setVisible] = useState(false)
+  const trapRef = useFocusTrap<HTMLDivElement>(!!category)
 
   useEffect(() => {
     if (!category) {
@@ -43,13 +45,16 @@ export function CategoryActionModal({ category, onClose }: CategoryActionModalPr
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div
         onClick={handleClose}
+        aria-hidden="true"
         className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}
       />
 
       <div
+        ref={trapRef}
         role="dialog"
         aria-modal="true"
-        className={`relative bg-[#0F2040] border border-[#1A3A5C] rounded-xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto transition-all duration-200 ${
+        tabIndex={-1}
+        className={`relative bg-[#0F2040] border border-[#1A3A5C] rounded-xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto transition-all duration-200 outline-none ${
           visible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2'
         }`}
       >
@@ -97,7 +102,7 @@ export function CategoryActionModal({ category, onClose }: CategoryActionModalPr
             <div>
               <p className="font-display text-2xl text-white leading-none">COMPARE</p>
               <p className="text-[#9CA3AF] text-sm mt-2 leading-relaxed">
-                Pick 2–6 specific products and see them side-by-side with an AI verdict.
+                Pick 2–4 specific products and see them side-by-side with an AI verdict.
               </p>
             </div>
           </Link>

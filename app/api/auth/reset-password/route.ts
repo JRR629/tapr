@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
 import { z } from 'zod'
+import { checkRateLimit, clientIp } from '@/lib/ratelimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +11,10 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
+    if (!(await checkRateLimit('reset_password', clientIp(request)))) {
+      return Response.json({ error: 'Too many requests. Please try again later.', code: 'RATE_LIMITED' }, { status: 429 })
+    }
+
     const body: unknown = await request.json()
     const parsed = schema.safeParse(body)
 

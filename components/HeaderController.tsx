@@ -1,10 +1,9 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { CompactHeader } from './CompactHeader'
 
-export function HeaderController() {
+export function HeaderController({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   if (pathname === '/dashboard') return null
-  return <CompactHeader />
+  return <>{children}</>
 }

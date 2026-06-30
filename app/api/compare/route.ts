@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getProductsByIds } from '@/lib/gear'
-import { anthropic, buildComparisonPrompt } from '@/lib/anthropic'
+import { anthropic, buildComparisonPrompt, TAPR_SYSTEM_PROMPT, TAPR_MODEL } from '@/lib/anthropic'
 import type { AthleteProfile } from '@/types/profile'
 import type { ComparisonResult } from '@/types/comparison'
 
@@ -108,6 +108,19 @@ export async function POST(request: Request) {
       }
     }
 
+    // Refund deducted credits if comparison generation fails after this point.
+    // No-op for free quick-compares (creditCost === 0). Logs loudly if the refund
+    // itself fails so it can be reconciled from credit_transactions.
+    const refundCredits = async () => {
+      if (creditCost <= 0) return
+      const { error: refundErr } = await adminDb.rpc('add_credits', {
+        p_user_id: user.id,
+        p_amount: creditCost,
+        p_reason: 'refund_comparison',
+      })
+      if (refundErr) console.error('[compare] REFUND FAILED — user short', creditCost, 'credit(s):', user.id, refundErr.message)
+    }
+
     // 7. Fetch athlete profile
     const { data: profile, error: profileError } = await supabase
       .from('athlete_profiles')
@@ -118,6 +131,7 @@ export async function POST(request: Request) {
       .single()
 
     if (profileError || !profile) {
+      await refundCredits()
       return Response.json({ error: 'Athlete profile not found. Please complete your profile first.', code: 'PROFILE_NOT_FOUND' }, { status: 400 })
     }
 
@@ -135,6 +149,7 @@ export async function POST(request: Request) {
       if (categoryRow) {
         const wrongCategory = dbProducts.find((p) => p.category_id !== categoryRow.id)
         if (wrongCategory) {
+          await refundCredits()
           return Response.json(
             { error: `Product "${wrongCategory.name}" does not belong to this category`, code: 'CATEGORY_MISMATCH' },
             { status: 400 }
@@ -145,6 +160,7 @@ export async function POST(request: Request) {
 
     // Check all requested DB products were found
     if (dbProducts.length !== productIds.length) {
+      await refundCredits()
       return Response.json(
         { error: 'One or more products not found or not active', code: 'NOT_FOUND' },
         { status: 400 }
@@ -159,6 +175,7 @@ export async function POST(request: Request) {
       .single()
 
     if (!category) {
+      await refundCredits()
       return Response.json({ error: 'Category not found', code: 'NOT_FOUND' }, { status: 400 })
     }
 
@@ -178,12 +195,14 @@ export async function POST(request: Request) {
     let streamResponse: ReturnType<typeof anthropic.messages.stream>
     try {
       streamResponse = anthropic.messages.stream({
-        model: 'claude-sonnet-4-5',
+        model: TAPR_MODEL,
         max_tokens: 6144,
+        system: TAPR_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],
       })
     } catch (err) {
       console.error('[compare] Anthropic stream init error:', err)
+      await refundCredits()
       return Response.json(
         { error: 'Failed to start comparison. Please try again.', code: 'AI_ERROR' },
         { status: 500 }
@@ -209,6 +228,7 @@ export async function POST(request: Request) {
           }
         } catch (err) {
           console.error('[compare] stream read error:', err)
+          await refundCredits()
           // Enqueue a sentinel so the client receives a proper error message
           // rather than a browser-level NetworkError from controller.error()
           const msg = err instanceof Error ? err.message : 'Stream error'
@@ -243,6 +263,7 @@ export async function POST(request: Request) {
               result = JSON.parse(jsonText) as ComparisonResult
             } catch (parseErr) {
               console.error('[compare] failed to parse Claude response:', parseErr)
+              await refundCredits()
               return
             }
 

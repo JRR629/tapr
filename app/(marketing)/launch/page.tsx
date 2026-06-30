@@ -54,7 +54,7 @@ function Hero() {
     <section className="max-w-4xl mx-auto px-6 py-14 md:py-20 text-center">
       <div className="inline-flex items-center gap-2 bg-[rgba(255,107,53,0.12)] text-[#FF6B35] text-xs font-semibold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full mb-8">
         <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] animate-pulse" />
-        Wetsuits · GPS Watches · Nutrition · Now live
+        Wetsuits · GPS Watches · Running Shoes · Nutrition · Now live
       </div>
       <h1 className="font-display text-6xl md:text-8xl text-white leading-none mb-6">
         Gear that fits your race.
@@ -196,13 +196,13 @@ function LaunchCategories() {
   const active = [
     { label: 'Wetsuits', Icon: Waves },
     { label: 'GPS Watches', Icon: Watch },
+    { label: 'Running Shoes', Icon: Footprints },
     { label: 'Nutrition', Icon: Zap },
   ]
 
   const coming = [
     { label: 'Goggles', Icon: Eye },
     { label: 'Tri Suits', Icon: Shirt },
-    { label: 'Running Shoes', Icon: Footprints },
     { label: 'Bikes', Icon: Bike },
     { label: 'Accessories', Icon: Package },
   ]
@@ -213,7 +213,7 @@ function LaunchCategories() {
         Available now
       </div>
       <h2 className="font-display text-5xl md:text-6xl text-white text-center mb-10">
-        Three categories. Fully launched.
+        Four categories. Fully launched.
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {active.map(({ label, Icon }) => (
@@ -281,45 +281,16 @@ function WhyTapr() {
 }
 
 function Pricing() {
-  const featureList = [
+  const creditMath = [
     '1 recommendation = 1 credit',
     '2-product comparison = 1 credit',
     '3–4 product comparison = 2 credits',
   ]
 
   const packs = [
-    {
-      label: 'Free',
-      price: '3 credits included',
-      sub: 'On signup, no card needed',
-      cta: 'Get started free',
-      href: '/signup',
-      primary: true,
-    },
-    {
-      label: '3 credits',
-      price: '$2.99',
-      sub: 'One more round of recs',
-      cta: 'Get started free',
-      href: '/signup',
-      primary: false,
-    },
-    {
-      label: '10 credits',
-      price: '$8.99',
-      sub: 'Build out your full kit',
-      cta: 'Get started free',
-      href: '/signup',
-      primary: false,
-    },
-    {
-      label: '25 credits',
-      price: '$17.99',
-      sub: 'For the gear-curious athlete',
-      cta: 'Get started free',
-      href: '/signup',
-      primary: false,
-    },
+    { label: '3 credits', price: '$2.99', sub: 'One more round of recs' },
+    { label: '10 credits', price: '$8.99', sub: 'Build out your full kit' },
+    { label: '25 credits', price: '$17.99', sub: 'A full season of gear calls' },
   ]
 
   return (
@@ -328,45 +299,50 @@ function Pricing() {
         Pricing
       </div>
       <h2 className="font-display text-5xl md:text-6xl text-white text-center mb-10">
-        Simple. No subscription.
+        Start free. Pay only if you want more.
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+
+      {/* Free tier — the hero */}
+      <div className="max-w-2xl mx-auto bg-[#0F2040] border border-[#FF6B35] rounded-lg p-8 shadow-[0_0_40px_rgba(255,107,53,0.08)] mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+          <div>
+            <span className="text-[#FF6B35] text-xs font-semibold uppercase tracking-[0.15em]">
+              Free
+            </span>
+            <div className="font-display text-4xl text-white mt-1 mb-1">3 credits included</div>
+            <p className="text-[#6B7280] text-sm">On signup. No card needed. No subscription, ever.</p>
+          </div>
+          <Link
+            href="/signup"
+            className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-7 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px] flex items-center justify-center text-sm shrink-0"
+          >
+            Get started free →
+          </Link>
+        </div>
+        <ul className="flex flex-col sm:flex-row sm:flex-wrap gap-x-6 gap-y-2 mt-6 pt-6 border-t border-[#1A3A5C]">
+          {creditMath.map((item) => (
+            <li key={item} className="flex items-center gap-2 text-sm text-[#D1D5DB]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] shrink-0" />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Paid packs — compact strip, bought in-app when you run low */}
+      <p className="text-[#6B7280] text-sm text-center mb-4">Need more? Top up anytime — credits never expire.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
         {packs.map((pack) => (
           <div
             key={pack.label}
-            className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-7 flex flex-col hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20 transition-all duration-200"
+            className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-5 text-center hover:-translate-y-1 hover:border-[#FF6B35] hover:shadow-lg hover:shadow-black/20 transition-all duration-200"
           >
-            <div className="mb-1">
-              <span className="text-[#6B7280] text-xs font-semibold uppercase tracking-[0.15em]">
-                {pack.label}
-              </span>
-            </div>
-            <div className="font-display text-3xl text-white mb-1">{pack.price}</div>
-            <div className="text-[#6B7280] text-sm mb-6">{pack.sub}</div>
-            <ul className="flex flex-col gap-2 mb-8 flex-1">
-              {featureList.map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-[#D1D5DB]">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#FF6B35] shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href={pack.href}
-              className={
-                pack.primary
-                  ? 'bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-6 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px] flex items-center justify-center text-sm'
-                  : 'border border-[#1A3A5C] hover:border-[#FF6B35] text-white px-6 py-3 rounded-md transition-colors min-h-[44px] flex items-center justify-center text-sm font-semibold'
-              }
-            >
-              {pack.cta}
-            </Link>
+            <div className="font-display text-2xl text-white">{pack.price}</div>
+            <div className="text-white text-sm font-semibold mt-1">{pack.label}</div>
+            <div className="text-[#6B7280] text-xs mt-1">{pack.sub}</div>
           </div>
         ))}
       </div>
-      <p className="text-[#6B7280] text-sm text-center">
-        Credits don&apos;t expire. No subscription. No Pro tier.
-      </p>
     </section>
   )
 }
@@ -401,6 +377,7 @@ function Footer() {
         Tapr earns a commission on purchases made through our links. This never influences our recommendations.
       </div>
       <div className="flex items-center gap-4 text-[#6B7280] text-sm">
+        <Link href="/how-it-works" className="hover:text-white transition-colors">Methodology</Link>
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
         <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
         <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>

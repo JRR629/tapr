@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, clientIp } from '@/lib/ratelimit'
 
 const notifySchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -8,6 +9,10 @@ const notifySchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    if (!(await checkRateLimit('category_notify', clientIp(request)))) {
+      return Response.json({ error: 'Too many requests. Please try again later.', code: 'RATE_LIMITED' }, { status: 429 })
+    }
+
     const body: unknown = await request.json()
 
     const parsed = notifySchema.safeParse(body)

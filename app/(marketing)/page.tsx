@@ -163,6 +163,7 @@ function Footer() {
         Tapr earns a commission on purchases made through our links. This never influences our recommendations.
       </div>
       <div className="flex items-center gap-4 text-[#6B7280] text-sm">
+        <Link href="/how-it-works" className="hover:text-white transition-colors">Methodology</Link>
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
         <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
         <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { athleteProfilePatchSchema } from '@/lib/validation/athleteProfile'
 
 export async function GET(_request: Request) {
   try {
@@ -36,15 +37,25 @@ export async function PATCH(request: Request) {
       return Response.json({ error: 'Authentication required', code: 'UNAUTHENTICATED' }, { status: 401 })
     }
 
-    const body: unknown = await request.json()
-    if (typeof body !== 'object' || body === null) {
-      return Response.json({ error: 'Invalid request body', code: 'BAD_REQUEST' }, { status: 400 })
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return Response.json({ error: 'Invalid JSON body', code: 'BAD_REQUEST' }, { status: 400 })
+    }
+
+    const parsed = athleteProfilePatchSchema.safeParse(body)
+    if (!parsed.success) {
+      return Response.json(
+        { error: 'Validation failed', code: 'VALIDATION_ERROR', fields: parsed.error.flatten().fieldErrors },
+        { status: 422 }
+      )
     }
 
     const { error } = await supabase
       .from('athlete_profiles')
       .upsert(
-        { ...(body as Record<string, unknown>), user_id: user.id, updated_at: new Date().toISOString() },
+        { ...parsed.data, user_id: user.id, updated_at: new Date().toISOString() },
         { onConflict: 'user_id' }
       )
 

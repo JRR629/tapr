@@ -69,15 +69,16 @@ export default function ResetPage() {
           </p>
 
           {error && (
-            <div className="bg-[#EF444420] border border-[#EF4444] text-[#EF4444] text-sm rounded-md px-4 py-3 mb-5">
+            <div role="alert" className="bg-[#EF444420] border border-[#EF4444] text-[#EF4444] text-sm rounded-md px-4 py-3 mb-5">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[#D1D5DB] text-sm mb-1.5">Email</label>
+              <label htmlFor="email" className="block text-[#D1D5DB] text-sm mb-1.5">Email</label>
               <input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

@@ -1,14 +1,38 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+const BASE = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.taprai.com').replace(/\/$/, '')
+
 export const metadata: Metadata = {
   title: 'Best GPS Watch for Triathlon 2025 — Tapr',
   description: 'The right GPS watch for triathlon depends on your race distance, budget, and existing gear. This guide covers what actually matters and our top picks by situation.',
+  alternates: { canonical: '/guides/best-gps-watch-triathlon' },
+}
+
+// Article structured data (item 27). Static, server-controlled — safe to inline.
+// TODO: add accurate datePublished / dateModified to strengthen rich-result eligibility.
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'The Best GPS Watch for Triathlon in 2025 — And How to Choose the Right One for You',
+  description:
+    'The right GPS watch for triathlon depends on your race distance, budget, and existing gear. This guide covers what actually matters and our top picks by situation.',
+  author: { '@type': 'Organization', name: 'Tapr' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Tapr',
+    logo: { '@type': 'ImageObject', url: `${BASE}/logo-email.png` },
+  },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE}/guides/best-gps-watch-triathlon` },
 }
 
 export default function GPSWatchGuidePage() {
   return (
     <div className="min-h-screen bg-[#0A1628]" style={{ background: 'radial-gradient(ellipse at top, #0F2040 0%, #0A1628 60%)' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <Nav />
       <article className="max-w-2xl mx-auto px-6 py-16">
         <h1 className="font-display text-5xl md:text-6xl text-white leading-tight mb-4">

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Settings } from 'lucide-react'
 import { AdminNavLink } from '@/components/AdminNavLink'
+import CreditBalance from '@/components/CreditBalance'
 
 export function CompactHeader() {
   return (
@@ -17,7 +18,8 @@ export function CompactHeader() {
             className="hover:opacity-90 transition-opacity w-[140px] md:w-[170px] h-auto"
           />
         </Link>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
+          <CreditBalance />
           <AdminNavLink />
           <Link
             href="/settings"

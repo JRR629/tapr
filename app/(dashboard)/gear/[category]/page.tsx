@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ComingSoonCard } from '@/components/ComingSoonCard'
 import { ModeChips } from '@/components/ModeChips'
+import { StartRecommendationButton } from '@/components/StartRecommendationButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -110,12 +111,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               </div>
             ))}
           </div>
-          <Link
-            href={`/gear/${categorySlug}/questionnaire`}
-            className="inline-flex items-center justify-center bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-6 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px]"
-          >
-            Get My Recommendation
-          </Link>
+          <StartRecommendationButton categorySlug={categorySlug} label="Get My Recommendation" />
         </div>
       )}
 
@@ -127,12 +123,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             <p className="text-[#9CA3AF] text-base mb-5 leading-relaxed">
               Answer the questions again — useful if your race, budget, or goals have changed.
             </p>
-            <Link
-              href={`/gear/${categorySlug}/questionnaire`}
-              className="inline-flex items-center justify-center border border-[#1A3A5C] hover:border-[#FF6B35] text-white px-6 py-3 rounded-md transition-all min-h-[44px]"
-            >
-              Start New Recommendation
-            </Link>
+            <StartRecommendationButton categorySlug={categorySlug} label="Start New Recommendation" />
           </div>
 
           {existingRecs && existingRecs.length > 0 && (

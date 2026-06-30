@@ -115,3 +115,18 @@ h1, h2 {
 .animate-tapr-shimmer {
   animation: tapr-shimmer 1.8s linear infinite;
 }
+
+/* Accessibility (item 23): honor reduced-motion. The design system leans on
+   scale/translate micro-interactions and looping spinners/shimmers; users who
+   request reduced motion get them effectively neutralized without changing
+   layout. Functional loading feedback (color/opacity) still reads. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

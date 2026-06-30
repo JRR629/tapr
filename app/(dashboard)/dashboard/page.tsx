@@ -4,6 +4,7 @@ import { Settings } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminNavLink } from '@/components/AdminNavLink'
+import CreditBalance from '@/components/CreditBalance'
 import { getActiveCategories, getRecentComparisons } from '@/lib/gear'
 import { CategoryGrid } from '@/components/CategoryGrid'
 
@@ -81,7 +82,8 @@ export default async function DashboardPage() {
           priority
           className="w-[220px] sm:w-[280px] h-auto"
         />
-        <div className="absolute right-6 top-4 md:top-6 flex items-center gap-1">
+        <div className="absolute right-6 top-4 md:top-6 flex items-center gap-3">
+          <CreditBalance />
           <AdminNavLink />
           <Link
             href="/settings"

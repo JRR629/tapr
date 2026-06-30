@@ -1,5 +1,7 @@
 'use client'
 
+import { track } from '@vercel/analytics'
+
 export function useAffiliateClick() {
   async function trackClick(
     productId: string,
@@ -16,6 +18,8 @@ export function useAffiliateClick() {
       if (response.ok) {
         const data = await response.json() as { redirectUrl?: string }
         if (data.redirectUrl) {
+          // Core revenue event. No URL/PII — just product + category.
+          track('affiliate_click', { productId, category: categorySlug ?? 'unknown' })
           window.open(data.redirectUrl, '_blank', 'noopener,noreferrer')
         }
       }

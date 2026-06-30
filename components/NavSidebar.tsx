@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Home, GitCompareArrows, Settings, Menu, X } from 'lucide-react'
 import SignOutButton from '@/components/auth/SignOutButton'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface NavSidebarProps {
   userEmail?: string
@@ -87,6 +88,10 @@ function NavContent({ pathname, onNavigate, userEmail }: { pathname: string; onN
 
         {/* Legal micro-links */}
         <div className="flex items-center gap-2 px-4 pt-2">
+          <Link href="/how-it-works" onClick={onNavigate} className="text-[#6B7280] hover:text-[#D1D5DB] text-[10px] transition-colors tracking-wide">
+            Methodology
+          </Link>
+          <span className="text-[#1A3A5C] text-[10px]">·</span>
           <Link href="/privacy" onClick={onNavigate} className="text-[#6B7280] hover:text-[#D1D5DB] text-[10px] transition-colors tracking-wide">
             Privacy
           </Link>
@@ -107,6 +112,16 @@ function NavContent({ pathname, onNavigate, userEmail }: { pathname: string; onN
 export function NavSidebar({ userEmail }: NavSidebarProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const drawerRef = useFocusTrap<HTMLElement>(mobileOpen)
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mobileOpen])
 
   return (
     <>
@@ -145,8 +160,15 @@ export function NavSidebar({ userEmail }: NavSidebarProps) {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
-          <nav className="relative w-72 bg-[#0F2040] border-r border-[#1A3A5C] h-full flex flex-col">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+          <nav
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            tabIndex={-1}
+            className="relative w-72 bg-[#0F2040] border-r border-[#1A3A5C] h-full flex flex-col outline-none"
+          >
             <div className="px-6 py-4 border-b border-[#1A3A5C] flex items-center justify-between">
               <span className="font-display text-2xl text-[#FF6B35] tracking-wider">TAPR</span>
               <button

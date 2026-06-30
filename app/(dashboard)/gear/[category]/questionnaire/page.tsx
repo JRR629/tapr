@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { RACE_DISTANCES_BY_SPORT, DISTANCE_LABELS, type Sport } from '@/lib/sports'
+import { ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Minus } from 'lucide-react'
+import { DISTANCE_LABELS } from '@/lib/sports'
 import { useAthleteProfile } from '@/hooks/useAthleteProfile'
 
 // ---------------------------------------------------------------------------
@@ -48,6 +48,7 @@ function SingleSelect({ field, options, answers, onChange }: SingleSelectProps) 
           <button
             key={opt}
             type="button"
+            aria-pressed={selected}
             onClick={() => onChange(field, opt)}
             className={`bg-[#0A1628] border rounded-lg px-5 py-4 text-left transition-all cursor-pointer min-h-[52px] text-sm font-medium ${
               selected
@@ -74,6 +75,7 @@ function MultiSelect({ field, options, answers, onChange, optionGroups }: MultiS
       <button
         key={opt}
         type="button"
+        aria-pressed={isSelected}
         onClick={() => onChange(field, opt)}
         className={`bg-[#0A1628] border rounded-lg px-5 py-4 text-left transition-all cursor-pointer min-h-[52px] text-sm font-medium flex items-center gap-3 ${
           isSelected
@@ -121,6 +123,97 @@ function MultiSelect({ field, options, answers, onChange, optionGroups }: MultiS
   )
 }
 
+interface BrandSentimentPickerProps {
+  brands: string[]
+  preferredField: string
+  avoidedField: string
+  answers: Answers
+  onChange: (preferredField: string, avoidedField: string, preferred: string[], avoided: string[]) => void
+}
+
+type BrandSentiment = 'like' | 'neutral' | 'dislike'
+
+function BrandSentimentPicker({ brands, preferredField, avoidedField, answers, onChange }: BrandSentimentPickerProps) {
+  const preferred = (answers[preferredField] as string[]) ?? []
+  const avoided = (answers[avoidedField] as string[]) ?? []
+
+  function getSentiment(brand: string): BrandSentiment {
+    if (preferred.includes(brand)) return 'like'
+    if (avoided.includes(brand)) return 'dislike'
+    return 'neutral'
+  }
+
+  function setSentiment(brand: string, sentiment: BrandSentiment) {
+    const nextPreferred = sentiment === 'like'
+      ? [...preferred.filter(b => b !== brand), brand]
+      : preferred.filter(b => b !== brand)
+    const nextAvoided = sentiment === 'dislike'
+      ? [...avoided.filter(b => b !== brand), brand]
+      : avoided.filter(b => b !== brand)
+    onChange(preferredField, avoidedField, nextPreferred, nextAvoided)
+  }
+
+  return (
+    <div className="flex flex-col divide-y divide-[#1A3A5C] border border-[#1A3A5C] rounded-lg overflow-hidden">
+      {brands.map((brand) => {
+        const sentiment = getSentiment(brand)
+        return (
+          <div key={brand} className="flex items-center justify-between px-4 py-3 bg-[#0A1628] min-h-[52px]">
+            <span className={`text-sm font-medium transition-colors ${
+              sentiment === 'like' ? 'text-[#FF6B35]' :
+              sentiment === 'dislike' ? 'text-[#6B7280]' :
+              'text-[#D1D5DB]'
+            }`}>
+              {brand}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setSentiment(brand, sentiment === 'dislike' ? 'neutral' : 'dislike')}
+                className={`flex items-center justify-center w-9 h-9 rounded-md border transition-all ${
+                  sentiment === 'dislike'
+                    ? 'border-[#EF4444] bg-[#EF444415] text-[#EF4444]'
+                    : 'border-[#1A3A5C] text-[#6B7280] hover:border-[#EF4444] hover:text-[#EF4444]'
+                }`}
+                aria-label={`Dislike ${brand}`}
+                aria-pressed={sentiment === 'dislike'}
+              >
+                <ThumbsDown size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSentiment(brand, 'neutral')}
+                className={`flex items-center justify-center w-9 h-9 rounded-md border transition-all ${
+                  sentiment === 'neutral'
+                    ? 'border-[#1A3A5C] bg-[#1A3A5C20] text-[#D1D5DB]'
+                    : 'border-[#1A3A5C] text-[#6B7280] hover:border-[#6B7280] hover:text-[#D1D5DB]'
+                }`}
+                aria-label={`Neutral on ${brand}`}
+                aria-pressed={sentiment === 'neutral'}
+              >
+                <Minus size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSentiment(brand, sentiment === 'like' ? 'neutral' : 'like')}
+                className={`flex items-center justify-center w-9 h-9 rounded-md border transition-all ${
+                  sentiment === 'like'
+                    ? 'border-[#FF6B35] bg-[#FF6B3515] text-[#FF6B35]'
+                    : 'border-[#1A3A5C] text-[#6B7280] hover:border-[#FF6B35] hover:text-[#FF6B35]'
+                }`}
+                aria-label={`Like ${brand}`}
+                aria-pressed={sentiment === 'like'}
+              >
+                <ThumbsUp size={14} />
+              </button>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 interface TextInputProps {
   field: string
   placeholder: string
@@ -161,11 +254,14 @@ function TextInput({ field, placeholder, answers, onChange }: TextInputProps) {
 interface QuestionDef {
   field: string
   label: string
-  type: 'single' | 'multi' | 'text'
+  type: 'single' | 'multi' | 'text' | 'brand_sentiment'
   options?: string[]
   placeholder?: string
   optional?: boolean   // if true, field is skipped in completion check; shows "(optional)"
   showIf?: (a: Answers) => boolean
+  // For brand_sentiment only: the secondary field that receives the disliked brands.
+  // The primary field receives liked brands; this field receives disliked brands.
+  secondaryField?: string
   // For multi-select only: cap selections to this count. Renders a hint after
   // the label ("select up to N"). When the cap is reached, clicking another
   // option is a no-op (user must deselect one first). Toggling off an already-
@@ -815,20 +911,16 @@ const RUNNING_SHOES_STEPS: StepDef[] = [
     // preferred_brands and avoided_brands drive soft scoring and hard-removes
     // respectively in filterRunningShoeProductsForPrompt. brand_history_notes
     // is free-text context passed verbatim to Claude.
+    // UI: single-pass brand_sentiment picker (like/neutral/dislike per brand)
+    // maps to preferred_brands + avoided_brands — no duplicate scrolling.
     title: 'Brand History',
-    subtitle: 'Past experience with brands is one of our strongest recommendation signals.',
+    subtitle: 'Rate each brand based on your experience. Skip any you haven\'t tried.',
     questions: [
       {
         field: 'preferred_brands',
-        label: 'Brands you\'d like emphasized in recommendations (optional — select all that apply).',
-        type: 'multi',
-        optional: true,
-        options: SHOE_BRAND_LIST,
-      },
-      {
-        field: 'avoided_brands',
-        label: 'Brands you do NOT want considered for any reason (optional — select all that apply).',
-        type: 'multi',
+        label: 'How do you feel about these brands?',
+        type: 'brand_sentiment',
+        secondaryField: 'avoided_brands',
         optional: true,
         options: SHOE_BRAND_LIST,
       },
@@ -1432,6 +1524,7 @@ export default function QuestionnairePage({ params }: QuestionnairePageProps) {
       if (shouldSkipQuestion(q.field)) continue
       if (q.optional) continue
       if (q.type === 'text') continue
+      if (q.type === 'brand_sentiment') continue
       if (q.type === 'multi') {
         const val = answers[q.field] as string[] | undefined
         if (!val || val.length === 0) return false
@@ -1572,6 +1665,16 @@ export default function QuestionnairePage({ params }: QuestionnairePageProps) {
                   placeholder={q.placeholder ?? ''}
                   answers={answers}
                   onChange={handleSingleChange}
+                />
+              ) : q.type === 'brand_sentiment' ? (
+                <BrandSentimentPicker
+                  brands={q.options ?? []}
+                  preferredField={q.field}
+                  avoidedField={q.secondaryField ?? ''}
+                  answers={answers}
+                  onChange={(preferredField, avoidedField, preferred, avoided) => {
+                    setAnswers(prev => ({ ...prev, [preferredField]: preferred, [avoidedField]: avoided }))
+                  }}
                 />
               ) : q.type === 'multi' ? (
                 <MultiSelect

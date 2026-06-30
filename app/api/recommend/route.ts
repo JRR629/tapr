@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getProductsWithReviewsForRecommendation, getNutritionProductsForRecommendation, getRunningShoeProductsForRecommendation } from '@/lib/gear'
-import { anthropic, buildRecommendationPrompt, buildNutritionPrompt, filterNutritionProductsForPrompt, buildRunningShoePrompt, filterRunningShoeProductsForPrompt, debugComputeShoeFilterInfo } from '@/lib/anthropic'
+import { anthropic, buildRecommendationPrompt, buildNutritionPrompt, filterNutritionProductsForPrompt, buildRunningShoePrompt, filterRunningShoeProductsForPrompt, debugComputeShoeFilterInfo, TAPR_SYSTEM_PROMPT, TAPR_MODEL } from '@/lib/anthropic'
 import { resolveProductImageUrl } from '@/lib/storage'
 import type { NutritionProductWithMentions, RunningShoeProductWithMentions } from '@/types/gear'
 import type { AthleteProfile } from '@/types/profile'
@@ -35,22 +35,22 @@ export async function POST(request: Request) {
 
     const { categorySlug, layer2Responses, budgetMin, budgetMax } = parsed.data
 
-    // Debug instrumentation: capture detailed state when ?debug=1
-    const debug = new URL(request.url).searchParams.get('debug') === '1'
-    let debugBundle: Record<string, unknown> | null = debug ? { startedAt: new Date().toISOString() } : null
-    if (debugBundle) {
-      debugBundle.categorySlug = categorySlug
-      debugBundle.layer2 = layer2Responses
-      debugBundle.budgetMin = budgetMin
-      debugBundle.budgetMax = budgetMax
-    }
-
     // 2. Auth check
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return Response.json({ error: 'Authentication required', code: 'UNAUTHENTICATED' }, { status: 401 })
     }
+
+    // Debug instrumentation — ADMIN ONLY. Captures detailed prompt/profile state
+    // and writes a dump to /tmp when ?debug=1. Gated on ADMIN_USER_ID so ordinary
+    // users cannot trigger verbose logging or disk writes.
+    const debug =
+      new URL(request.url).searchParams.get('debug') === '1' &&
+      user.id === process.env.ADMIN_USER_ID
+    const debugBundle: Record<string, unknown> | null = debug
+      ? { startedAt: new Date().toISOString(), categorySlug, layer2: layer2Responses, budgetMin, budgetMax }
+      : null
 
     // 3. Check and deduct 1 credit (atomic — must happen before Claude call)
     const adminDb = createAdminClient()
@@ -66,6 +66,17 @@ export async function POST(request: Request) {
       )
     }
 
+    // Refund the deducted credit if generation fails after this point. Logs loudly
+    // if the refund itself fails so it can be reconciled from credit_transactions.
+    const refundCredit = async () => {
+      const { error: refundErr } = await adminDb.rpc('add_credits', {
+        p_user_id: user.id,
+        p_amount: 1,
+        p_reason: 'refund_recommendation',
+      })
+      if (refundErr) console.error('[recommend] REFUND FAILED — user short 1 credit:', user.id, refundErr.message)
+    }
+
     // 4. Fetch athlete profile
     const { data: profile, error: profileError } = await supabase
       .from('athlete_profiles')
@@ -76,6 +87,7 @@ export async function POST(request: Request) {
       .single()
 
     if (profileError || !profile) {
+      await refundCredit()
       return Response.json({ error: 'Athlete profile not found. Please complete your profile first.', code: 'PROFILE_NOT_FOUND' }, { status: 400 })
     }
 
@@ -111,6 +123,7 @@ export async function POST(request: Request) {
 
     const activeProducts = isNutrition ? nutritionProducts : isRunningShoes ? shoeProducts : products
     if (activeProducts.length === 0) {
+      await refundCredit()
       return Response.json(
         { error: 'No products found in this category within your budget range.', code: 'NO_PRODUCTS' },
         { status: 400 }
@@ -125,6 +138,7 @@ export async function POST(request: Request) {
       .single()
 
     if (categoryError || !category) {
+      await refundCredit()
       return Response.json({ error: 'Category not found', code: 'NOT_FOUND' }, { status: 400 })
     }
 
@@ -172,12 +186,14 @@ export async function POST(request: Request) {
     let streamResponse: ReturnType<typeof anthropic.messages.stream>
     try {
       streamResponse = anthropic.messages.stream({
-        model: 'claude-sonnet-4-6',
+        model: TAPR_MODEL,
         max_tokens: (categorySlug === 'nutrition' || categorySlug === 'running-shoes') ? 4096 : 2048,
+        system: TAPR_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],
       })
     } catch (err) {
       console.error('[recommend] Anthropic stream init error:', err)
+      await refundCredit()
       return Response.json(
         { error: 'Failed to start AI recommendation. Please try again.', code: 'AI_ERROR' },
         { status: 500 }
@@ -203,6 +219,7 @@ export async function POST(request: Request) {
           }
         } catch (err) {
           console.error('[recommend] stream read error:', err)
+          await refundCredit()
           const msg = err instanceof Error ? err.message : 'Stream error'
           controller.enqueue(encoder.encode(`__STREAM_ERROR__:${msg}`))
           controller.close()
@@ -295,6 +312,7 @@ export async function POST(request: Request) {
               }
             } catch (parseErr) {
               console.error('[recommend] failed to parse Claude response:', parseErr)
+              await refundCredit()
               if (debugBundle) {
                 debugBundle.parseSucceeded = false
                 debugBundle.parseError = String(parseErr)

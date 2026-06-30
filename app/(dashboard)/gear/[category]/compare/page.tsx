@@ -329,7 +329,7 @@ function ComparePageInner() {
               </span>
             ))}
           </div>
-          <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-8">
+          <div className="flex flex-col items-center gap-8 py-12">
             <LoadingProgress
               label="COMPARING FOR YOUR PROFILE"
               messages={categorySlug === 'nutrition' ? [

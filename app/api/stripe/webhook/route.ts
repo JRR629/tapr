@@ -1,6 +1,8 @@
 import { headers } from 'next/headers'
+import * as Sentry from '@sentry/nextjs'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { stripe } from '@/lib/stripe'
+import { alertFounder } from '@/lib/alert'
 import type Stripe from 'stripe'
 
 const PACK_CREDITS: Record<string, number> = {
@@ -58,6 +60,17 @@ export async function POST(request: Request) {
 
       if (error) {
         console.error('[stripe/webhook] add_credits RPC failed:', error.message)
+        // PAID BUT NO CREDITS — highest-severity failure. Alert the founder so it
+        // can be reconciled manually. Stripe will also retry (we return 500).
+        Sentry.captureException(new Error(`add_credits failed after payment: ${error.message}`), {
+          extra: { userId, pack, credits, stripeSessionId: session.id },
+        })
+        await alertFounder(
+          'Credit grant FAILED after payment',
+          `User ${userId} paid for pack_${pack} (${credits} credits) but add_credits failed.\n` +
+            `Stripe session: ${session.id}\nError: ${error.message}\n\n` +
+            `ACTION: verify in Stripe, then manually grant credits if the retry does not succeed.`
+        )
         return Response.json({ error: 'Failed to grant credits', code: 'INTERNAL_ERROR' }, { status: 500 })
       }
     }

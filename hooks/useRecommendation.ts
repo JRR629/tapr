@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { track } from '@vercel/analytics'
 import type { RecommendationResult, RunningShoeResult, NutritionResult, Layer2Responses } from '@/types/recommendation'
 
 export function useRecommendation() {
@@ -145,6 +146,7 @@ export function useRecommendation() {
         setResult(parsed as RecommendationResult)
         setIsComplete(true)
         setRecommendationId(pendingRecId)
+        track('recommendation_generated', { category: categorySlug })
       } catch {
         throw new Error('Failed to parse recommendation result. Please try again.')
       }

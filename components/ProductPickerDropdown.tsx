@@ -35,15 +35,24 @@ export function ProductPickerDropdown({
   const [showExternalInput, setShowExternalInput] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Close on outside click
+  // Close on outside click or Escape
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false)
       }
     }
-    if (isOpen) document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') setIsOpen(false)
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEsc)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEsc)
+    }
   }, [isOpen])
 
   // Load products when dropdown opens
@@ -109,6 +118,8 @@ export function ProductPickerDropdown({
       <button
         type="button"
         onClick={() => setIsOpen((o) => !o)}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         className="w-full flex items-center justify-between gap-3 bg-[#0F2040] border border-[#1A3A5C] hover:border-[#FF6B35] text-white px-4 py-3 rounded-md transition-all min-h-[44px] focus:outline-none focus:border-[#FF6B35] focus:shadow-[0_0_0_3px_rgba(255,107,53,0.15)]"
       >
         <span className="flex items-center gap-2 min-w-0">
@@ -136,7 +147,7 @@ export function ProductPickerDropdown({
               role="button"
               tabIndex={0}
               onClick={(e) => { e.stopPropagation(); onClear() }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onClear() } }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onClear() } }}
               className="text-[#6B7280] hover:text-white transition-colors p-1 rounded"
               aria-label="Clear selection"
             >

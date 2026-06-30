@@ -7,7 +7,6 @@ import { useRecommendation } from '@/hooks/useRecommendation'
 import { RecommendationCard } from '@/components/RecommendationCard'
 import { NutritionRecommendationCard } from '@/components/NutritionRecommendationCard'
 import { RunningShoeRecommendationCard } from '@/components/RunningShoeRecommendationCard'
-import { RecommendationFeedback } from '@/components/RecommendationFeedback'
 import { LoadingProgress } from '@/components/LoadingProgress'
 import type { Layer2Responses, RecommendationResult, NutritionResult, RunningShoeResult } from '@/types/recommendation'
 
@@ -303,6 +302,15 @@ export default function RecommendationPage({ params }: RecommendationPageProps) 
             <RecommendationFeedback recommendationId={displayRecId} />
           </div>
         )} */}
+
+        {/* Nutrition safety disclaimer — allergen / medical (item 16) */}
+        {displayResult && category === 'nutrition' && (
+          <div className="mt-6 px-4 py-3 bg-[#0A1628] border border-[#1A3A5C] rounded-md">
+            <p className="text-[#6B7280] text-xs leading-relaxed">
+              This is gear guidance, not medical or dietary advice. Always verify ingredients and allergen information with the manufacturer before use — especially if you have allergies, intolerances, or dietary restrictions.
+            </p>
+          </div>
+        )}
 
         {/* Single consolidated disclosure band — replaces per-card / per-button duplicates */}
         {displayResult && (

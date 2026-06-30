@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { Resend } from 'resend'
+import { checkRateLimit, clientIp } from '@/lib/ratelimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,10 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
+    if (!(await checkRateLimit('contact', clientIp(request)))) {
+      return Response.json({ error: 'Too many requests. Please try again later.', code: 'RATE_LIMITED' }, { status: 429 })
+    }
+
     const body: unknown = await request.json()
     const parsed = schema.safeParse(body)
     if (!parsed.success) {

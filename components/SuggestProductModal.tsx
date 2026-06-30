@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface Props {
   categorySlug: string
@@ -17,6 +18,7 @@ export function SuggestProductModal({ categorySlug, categoryLabel, isOpen, onClo
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   useEffect(() => {
     if (!isOpen) return
@@ -93,7 +95,7 @@ export function SuggestProductModal({ categorySlug, categoryLabel, isOpen, onClo
       />
 
       {/* Modal card */}
-      <div className="relative bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
+      <div ref={trapRef} tabIndex={-1} className="relative bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-6 w-full max-w-md mx-4 shadow-xl outline-none">
         {success ? (
           <div className="flex flex-col items-center gap-4 py-4 text-center">
             <div className="w-12 h-12 rounded-full bg-[#22C55E]/15 flex items-center justify-center">
@@ -198,7 +200,7 @@ export function SuggestProductModal({ categorySlug, categoryLabel, isOpen, onClo
               </div>
 
               {/* Error */}
-              {error && <p className="text-[#EF4444] text-sm">{error}</p>}
+              {error && <p role="alert" className="text-[#EF4444] text-sm">{error}</p>}
 
               {/* Actions */}
               <div className="flex gap-3 pt-1">

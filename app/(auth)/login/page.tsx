@@ -51,15 +51,16 @@ export default function LoginPage() {
           <h1 className="font-display text-4xl text-white mb-6 tracking-wide">WELCOME BACK</h1>
 
           {error && (
-            <div className="bg-[#EF444420] border border-[#EF4444] text-[#EF4444] text-sm rounded-md px-4 py-3 mb-5">
+            <div role="alert" className="bg-[#EF444420] border border-[#EF4444] text-[#EF4444] text-sm rounded-md px-4 py-3 mb-5">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[#D1D5DB] text-sm mb-1.5">Email</label>
+              <label htmlFor="email" className="block text-[#D1D5DB] text-sm mb-1.5">Email</label>
               <input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -72,7 +73,7 @@ export default function LoginPage() {
 
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-[#D1D5DB] text-sm">Password</label>
+                <label htmlFor="password" className="text-[#D1D5DB] text-sm">Password</label>
                 <Link
                   href="/reset"
                   className="text-[#6B7280] text-xs hover:text-[#FF6B35] transition-colors"
@@ -81,6 +82,7 @@ export default function LoginPage() {
                 </Link>
               </div>
               <input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

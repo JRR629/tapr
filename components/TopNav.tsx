@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Settings, Menu, X, Home, GitCompareArrows, ChevronDown } from 'lucide-react'
 import SignOutButton from '@/components/auth/SignOutButton'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface TopNavProps {
   userEmail?: string
@@ -21,6 +22,25 @@ export function TopNav({ userEmail, firstName }: TopNavProps) {
   const pathname = usePathname()
   const [accountOpen, setAccountOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const drawerRef = useFocusTrap<HTMLElement>(mobileOpen)
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mobileOpen])
+
+  useEffect(() => {
+    if (!accountOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAccountOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [accountOpen])
 
   const initial = (firstName ?? userEmail ?? '?').charAt(0).toUpperCase()
 
@@ -92,6 +112,9 @@ export function TopNav({ userEmail, firstName }: TopNavProps) {
             <button
               type="button"
               onClick={() => setAccountOpen((v) => !v)}
+              aria-expanded={accountOpen}
+              aria-haspopup="menu"
+              aria-label="Account menu"
               className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-[#ffffff08] transition-colors min-h-[36px]"
             >
               <div className="w-6 h-6 rounded-full bg-[#0A1628] border border-[#1A3A5C] flex items-center justify-center flex-shrink-0">
@@ -110,7 +133,7 @@ export function TopNav({ userEmail, firstName }: TopNavProps) {
 
             {accountOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setAccountOpen(false)} />
+                <div className="fixed inset-0 z-40" onClick={() => setAccountOpen(false)} aria-hidden="true" />
                 <div className="absolute right-0 top-full mt-1.5 w-44 bg-[#0F2040] border border-[#1A3A5C] rounded-lg shadow-2xl z-50 py-1 overflow-hidden">
                   <Link
                     href="/settings"
@@ -134,8 +157,15 @@ export function TopNav({ userEmail, firstName }: TopNavProps) {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
-          <nav className="relative w-72 bg-[#0F2040] border-r border-[#1A3A5C] h-full flex flex-col">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+          <nav
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            tabIndex={-1}
+            className="relative w-72 bg-[#0F2040] border-r border-[#1A3A5C] h-full flex flex-col outline-none"
+          >
 
             {/* Logo in drawer header */}
             <div className="px-6 py-5 border-b border-[#1A3A5C] flex items-center justify-between">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface Props {
   productId?: string
@@ -32,6 +33,7 @@ export function ReportCorrectionModal({
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   useEffect(() => {
     if (!isOpen) return
@@ -109,7 +111,7 @@ export function ReportCorrectionModal({
       />
 
       {/* Modal card */}
-      <div className="relative bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-6 w-full max-w-md mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div ref={trapRef} tabIndex={-1} className="relative bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-6 w-full max-w-md mx-4 shadow-xl max-h-[90vh] overflow-y-auto outline-none">
         {success ? (
           <div className="flex flex-col items-center gap-4 py-4 text-center">
             <div className="w-12 h-12 rounded-full bg-[#22C55E]/15 flex items-center justify-center">
@@ -201,7 +203,7 @@ export function ReportCorrectionModal({
               </div>
 
               {/* Error */}
-              {error && <p className="text-[#EF4444] text-sm">{error}</p>}
+              {error && <p role="alert" className="text-[#EF4444] text-sm">{error}</p>}
 
               {/* Actions */}
               <div className="flex gap-3 pt-1">

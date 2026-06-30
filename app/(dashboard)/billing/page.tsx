@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, Zap } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
+import { track } from '@vercel/analytics'
 import { useCredits } from '@/hooks/useCredits'
 
 const CREDIT_PACKS = [
@@ -43,6 +44,15 @@ export default function BillingPage() {
   const canceled = searchParams.get('canceled') === 'true'
   const successPack = searchParams.get('pack')
   const creditsAdded = successPack ? PACK_CREDIT_MAP[successPack] : null
+
+  // Fire the purchase conversion event when Stripe returns success. Keyed on the
+  // pack so a re-render doesn't re-fire; a manual refresh of the success URL can
+  // still double-count (acceptable for launch analytics).
+  useEffect(() => {
+    if (success && successPack) {
+      track('credit_purchase', { pack: successPack, credits: creditsAdded ?? 0 })
+    }
+  }, [success, successPack, creditsAdded])
 
   async function handleBuy(pack: '3' | '10' | '25') {
     setLoadingPack(pack)
