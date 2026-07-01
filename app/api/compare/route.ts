@@ -197,7 +197,10 @@ export async function POST(request: Request) {
     try {
       streamResponse = anthropic.messages.stream({
         model: TAPR_MODEL,
-        max_tokens: 6144,
+        // 6144 tokens was ~100s of generation — structurally over the 60s function
+        // limit, so longer comparisons always timed out. 4096 keeps generation
+        // within budget; incomplete results now fail cleanly (guarded in the card).
+        max_tokens: 4096,
         system: TAPR_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],
       })

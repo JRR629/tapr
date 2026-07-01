@@ -44,7 +44,7 @@ export default function CreditGate({ cost, onProceed, label = 'Continue' }: Cred
           {label}
         </button>
         <p className="text-[#6B7280] text-xs mt-2">
-          Uses {cost} credit{cost !== 1 ? 's' : ''} · {credits} remaining
+          Uses {cost} credit{cost !== 1 ? 's' : ''}
         </p>
       </div>
     )
@@ -62,7 +62,7 @@ export default function CreditGate({ cost, onProceed, label = 'Continue' }: Cred
         {label}
       </button>
       <p className="text-[#6B7280] text-xs mt-2">
-        Uses {cost} credit{cost !== 1 ? 's' : ''} · {credits ?? 0} remaining
+        Uses {cost} credit{cost !== 1 ? 's' : ''}
       </p>
       <div className="mt-3 p-4 bg-[#0F2040] border border-[#1A3A5C] rounded-lg">
         <p className="text-[#D1D5DB] text-sm mb-3">You&apos;ve used your free credits.</p>

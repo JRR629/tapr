@@ -36,7 +36,7 @@ function ConfidenceBadge({ level, reason }: { level: 'high' | 'medium' | 'low'; 
     high: { label: 'High Confidence', color: 'text-[#22C55E]', dot: 'bg-[#22C55E]' },
     medium: { label: 'Medium Confidence', color: 'text-[#F59E0B]', dot: 'bg-[#F59E0B]' },
     low: { label: 'Low Confidence', color: 'text-[#EF4444]', dot: 'bg-[#EF4444]' },
-  }[level]
+  }[level] ?? { label: 'Confidence', color: 'text-[#6B7280]', dot: 'bg-[#6B7280]' }
 
   return (
     <div className="flex flex-col gap-1">
@@ -173,6 +173,23 @@ function RunnerUpRow({
 }
 
 export function ComparisonResultCard({ result, categorySlug }: ComparisonResultCardProps) {
+  // Guard against an incomplete result (e.g. a timed-out or truncated AI
+  // response that parsed only partially). Render a clean retry instead of
+  // crashing on missing verdict/products/tradeoffs/sources.
+  const isComplete =
+    !!result?.verdict?.winnerProductName &&
+    Array.isArray(result?.products) && result.products.length > 0 &&
+    Array.isArray(result?.tradeoffs) &&
+    Array.isArray(result?.sourcesDrawnFrom)
+  if (!isComplete) {
+    return (
+      <div className="bg-[#0F2040] border border-[#EF4444] rounded-lg p-6 text-center">
+        <p className="text-[#EF4444] font-semibold mb-1">Comparison didn&apos;t finish</p>
+        <p className="text-[#9CA3AF] text-sm">The result came back incomplete. Please try again.</p>
+      </div>
+    )
+  }
+
   const winner = result.products.find(
     (p) =>
       p.productName === result.verdict.winnerProductName ||
