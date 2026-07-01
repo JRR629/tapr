@@ -10,7 +10,6 @@ import { ComparisonResultCard } from '@/components/ComparisonResultCard'
 import { LoadingProgress } from '@/components/LoadingProgress'
 import { ModeChips } from '@/components/ModeChips'
 import { useComparison } from '@/hooks/useComparison'
-import { useCredits } from '@/hooks/useCredits'
 import type { CompareSlot, DBProductSlot, ExternalProductSlot, ComparisonResult } from '@/types/comparison'
 
 function formatDate(dateString: string): string {
@@ -26,7 +25,6 @@ function ComparePageInner() {
   const categorySlug = params.category
 
   const { streamedText, result, isStreaming, isComplete, error, comparisonId, reset, runComparison } = useComparison()
-  const { credits } = useCredits()
 
   const MAX_PRODUCTS = 4
 
@@ -248,16 +246,10 @@ function ComparePageInner() {
         <p className="text-[#6B7280] text-xs uppercase tracking-widest mb-2">
           {categorySlug.replace(/-/g, ' ')}
         </p>
-        <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
+        <div className="mb-4">
           <h1 className="font-display text-5xl text-white">
             {categorySlug.replace(/-/g, ' ').toUpperCase()}
           </h1>
-          {credits !== null && (
-            <div className="text-right shrink-0">
-              <p className="text-[#6B7280] text-xs uppercase tracking-wide mb-1">Credits</p>
-              <p className="text-white text-sm font-semibold">{credits} remaining</p>
-            </div>
-          )}
         </div>
       </div>
 

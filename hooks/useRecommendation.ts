@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { track } from '@vercel/analytics'
 import { parseModelJson } from '@/lib/parseModelJson'
+import { notifyCreditsChanged } from '@/lib/creditsEvents'
 import type { RecommendationResult, RunningShoeResult, NutritionResult, Layer2Responses } from '@/types/recommendation'
 
 export function useRecommendation() {
@@ -49,6 +50,10 @@ export function useRecommendation() {
         }
         throw new Error(errorMessage)
       }
+
+      // Request accepted → the credit was deducted server-side. Refresh the
+      // balance immediately so every display (header, etc.) reflects it live.
+      notifyCreditsChanged()
 
       if (!response.body) {
         throw new Error('No response body received')
@@ -155,6 +160,9 @@ export function useRecommendation() {
       setError(err instanceof Error ? err.message : 'Unknown error occurred')
     } finally {
       setIsStreaming(false)
+      // Reconcile once settled — catches a background refund on failure.
+      // A short delay lets the server's async refund land first.
+      setTimeout(notifyCreditsChanged, 1500)
     }
   }
 

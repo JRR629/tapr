@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { parseModelJson } from '@/lib/parseModelJson'
+import { notifyCreditsChanged } from '@/lib/creditsEvents'
 import type { ComparisonResult } from '@/types/comparison'
 
 export function useComparison() {
@@ -61,6 +62,9 @@ export function useComparison() {
         throw new Error(errorMessage)
       }
 
+      // Request accepted → credits deducted server-side. Refresh displays live.
+      notifyCreditsChanged()
+
       if (!response.body) {
         throw new Error('No response body received')
       }
@@ -118,6 +122,8 @@ export function useComparison() {
       setError(err instanceof Error ? err.message : 'Unknown error occurred')
     } finally {
       setIsStreaming(false)
+      // Reconcile once settled — catches a background refund on failure.
+      setTimeout(notifyCreditsChanged, 1500)
     }
   }
 
