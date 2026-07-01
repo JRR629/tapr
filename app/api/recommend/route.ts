@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getProductsWithReviewsForRecommendation, getNutritionProductsForRecommendation, getRunningShoeProductsForRecommendation } from '@/lib/gear'
 import { anthropic, buildRecommendationPrompt, buildNutritionPrompt, filterNutritionProductsForPrompt, buildRunningShoePrompt, filterRunningShoeProductsForPrompt, debugComputeShoeFilterInfo, TAPR_SYSTEM_PROMPT, TAPR_MODEL } from '@/lib/anthropic'
 import { resolveProductImageUrl } from '@/lib/storage'
+import { parseModelJson } from '@/lib/parseModelJson'
 import type { NutritionProductWithMentions, RunningShoeProductWithMentions } from '@/types/gear'
 import type { AthleteProfile } from '@/types/profile'
 import type { RecommendationResult, NutritionResult, RunningShoeResult } from '@/types/recommendation'
@@ -187,7 +188,9 @@ export async function POST(request: Request) {
     try {
       streamResponse = anthropic.messages.stream({
         model: TAPR_MODEL,
-        max_tokens: (categorySlug === 'nutrition' || categorySlug === 'running-shoes') ? 4096 : 2048,
+        // 4096 for all categories — 2048 risked truncating richer generic
+        // recommendations (wetsuits/GPS watches with Apple ecosystem notes, etc.).
+        max_tokens: 4096,
         system: TAPR_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],
       })
@@ -297,21 +300,21 @@ export async function POST(request: Request) {
             // Parse Claude response
             let result: RecommendationResult | NutritionResult | RunningShoeResult
             try {
-              // Strip both server-injected sentinels and markdown code fences
+              // Strip server-injected sentinels, then robustly parse (handles
+              // fences, prose, and malformed JSON via jsonrepair).
               const stripped = accumulatedText
                 .replace(/\n__IMAGE_MAP__:\{.*\}$/, '')
                 .replace(/\n__SOURCE_URLS__:\{.*\}$/, '')
-              let jsonText = stripped.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-              // Robustly find the outermost JSON object — handles extra prose or partial wrapping
-              const jStart = jsonText.indexOf('{')
-              const jEnd = jsonText.lastIndexOf('}')
-              if (jStart !== -1 && jEnd > jStart) jsonText = jsonText.slice(jStart, jEnd + 1)
-              result = JSON.parse(jsonText) as RecommendationResult | NutritionResult | RunningShoeResult
+              result = parseModelJson<RecommendationResult | NutritionResult | RunningShoeResult>(
+                stripped,
+                () => console.warn('[recommend] Claude JSON was malformed — recovered via jsonrepair')
+              )
               if (debugBundle) {
                 debugBundle.parseSucceeded = true
               }
             } catch (parseErr) {
-              console.error('[recommend] failed to parse Claude response:', parseErr)
+              console.error('[recommend] failed to parse Claude response (even after repair):', parseErr)
+              console.error('[recommend] raw output tail (last 400 chars):', accumulatedText.slice(-400))
               await refundCredit()
               if (debugBundle) {
                 debugBundle.parseSucceeded = false

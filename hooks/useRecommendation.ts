@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { track } from '@vercel/analytics'
+import { parseModelJson } from '@/lib/parseModelJson'
 import type { RecommendationResult, RunningShoeResult, NutritionResult, Layer2Responses } from '@/types/recommendation'
 
 export function useRecommendation() {
@@ -98,10 +99,10 @@ export function useRecommendation() {
         if (idx !== -1) jsonAccumulated = jsonAccumulated.slice(0, idx)
       }
 
-      // Parse accumulated JSON
+      // Parse accumulated JSON (robust: handles fences, prose, and malformed
+      // JSON via jsonrepair — same helper the server uses).
       try {
-        const jsonText = jsonAccumulated.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-        const parsed = JSON.parse(jsonText) as RecommendationResult | RunningShoeResult | NutritionResult
+        const parsed = parseModelJson<RecommendationResult | RunningShoeResult | NutritionResult>(jsonAccumulated)
 
         // ── Enrich sourcesDrawnFrom with URLs from our database (authoritative) ──
         if (Object.keys(sourceUrlMap).length > 0 && 'sourcesDrawnFrom' in parsed && Array.isArray(parsed.sourcesDrawnFrom)) {

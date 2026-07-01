@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getProductsByIds } from '@/lib/gear'
 import { anthropic, buildComparisonPrompt, TAPR_SYSTEM_PROMPT, TAPR_MODEL } from '@/lib/anthropic'
+import { parseModelJson } from '@/lib/parseModelJson'
 import type { AthleteProfile } from '@/types/profile'
 import type { ComparisonResult } from '@/types/comparison'
 
@@ -259,10 +260,13 @@ export async function POST(request: Request) {
             let result: ComparisonResult
             try {
               const stripped = accumulatedText.replace(/\n__SOURCE_URLS__:\{.*\}$/, '')
-              const jsonText = stripped.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-              result = JSON.parse(jsonText) as ComparisonResult
+              result = parseModelJson<ComparisonResult>(
+                stripped,
+                () => console.warn('[compare] Claude JSON was malformed — recovered via jsonrepair')
+              )
             } catch (parseErr) {
-              console.error('[compare] failed to parse Claude response:', parseErr)
+              console.error('[compare] failed to parse Claude response (even after repair):', parseErr)
+              console.error('[compare] raw output tail (last 400 chars):', accumulatedText.slice(-400))
               await refundCredits()
               return
             }

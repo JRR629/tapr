@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { parseModelJson } from '@/lib/parseModelJson'
 import type { ComparisonResult } from '@/types/comparison'
 
 export function useComparison() {
@@ -93,10 +94,10 @@ export function useComparison() {
         jsonAccumulated = accumulated.slice(0, accumulated.lastIndexOf('\n__SOURCE_URLS__:'))
       }
 
-      // Parse accumulated JSON
+      // Parse accumulated JSON (robust: handles fences, prose, and malformed
+      // JSON via jsonrepair — same helper the server uses).
       try {
-        const jsonText = jsonAccumulated.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-        const parsed = JSON.parse(jsonText) as ComparisonResult
+        const parsed = parseModelJson<ComparisonResult>(jsonAccumulated)
 
         // Enrich sourcesDrawnFrom with URLs from our database (authoritative)
         if (Object.keys(sourceUrlMap).length > 0) {
