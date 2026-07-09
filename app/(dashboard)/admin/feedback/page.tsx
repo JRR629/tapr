@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { AdminNav } from '@/components/AdminNav'
 
 const CORRECTION_TYPE_LABELS: Record<string, string> = {
   price: 'Price incorrect',
@@ -129,6 +130,7 @@ export default async function AdminFeedbackPage() {
   return (
     <div className="min-h-screen bg-[#0A1628] px-4 py-8 md:px-8">
       <div className="max-w-5xl mx-auto">
+        <AdminNav active="/admin/feedback" />
         {/* Page heading */}
         <h1 className="font-display text-4xl text-white tracking-wide mb-8">USER FEEDBACK</h1>
 

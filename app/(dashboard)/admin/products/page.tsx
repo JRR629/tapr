@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { adminGetAllProducts, getActiveCategories } from '@/lib/gear'
+import { AdminNav } from '@/components/AdminNav'
 import { AdminProductsClient } from './AdminProductsClient'
 
 export default async function AdminProductsPage() {
@@ -15,5 +16,14 @@ export default async function AdminProductsPage() {
 
   const [products, categories] = await Promise.all([adminGetAllProducts(), getActiveCategories()])
 
-  return <AdminProductsClient products={products} categories={categories} />
+  return (
+    <>
+      <div className="bg-[#0A1628] px-4 pt-8 md:px-8">
+        <div className="max-w-5xl mx-auto">
+          <AdminNav active="/admin/products" />
+        </div>
+      </div>
+      <AdminProductsClient products={products} categories={categories} />
+    </>
+  )
 }
