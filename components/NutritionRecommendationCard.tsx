@@ -5,6 +5,7 @@ import { Info, Flag, PlusCircle } from 'lucide-react'
 import { AffiliateButton } from '@/components/AffiliateButton'
 import { ReportCorrectionModal } from '@/components/ReportCorrectionModal'
 import { SuggestProductModal } from '@/components/SuggestProductModal'
+import { formatPrice } from '@/lib/utils'
 import type { NutritionResult, NutritionResultTriSplit, NutritionResultTriUnified, NutritionResultSingle, NutritionOption, NutritionSupplement } from '@/types/recommendation'
 
 interface NutritionRecommendationCardProps {
@@ -64,7 +65,7 @@ function OptionCard({
     <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-4 flex flex-col gap-3 hover:-translate-y-1 hover:border-[#FF6B35] transition-all duration-200">
       <div>
         <h3 className="font-display text-2xl text-white leading-tight">{(option.productName ?? '').toUpperCase()}</h3>
-        <p className="font-mono text-[#FF6B35] text-lg mt-0.5">${(option.priceUsd ?? 0).toLocaleString()}</p>
+        <p className="font-mono text-[#FF6B35] text-lg mt-0.5">${formatPrice(option.priceUsd)}</p>
       </div>
       {option.productId && (
         <AffiliateButton
@@ -126,7 +127,7 @@ function SupplementCard({
     <div className="bg-[#0F2040] border border-[#1A3A5C] rounded-lg p-5">
       <span className="text-[#9CA3AF] text-xs font-semibold uppercase tracking-wide">Long Race Supplement</span>
       <h4 className="font-display text-2xl text-white mt-2 leading-tight">{(supplement.productName ?? '').toUpperCase()}</h4>
-      <p className="font-mono text-[#9CA3AF] text-base mt-1">${(supplement.priceUsd ?? 0).toLocaleString()}*</p>
+      <p className="font-mono text-[#9CA3AF] text-base mt-1">${formatPrice(supplement.priceUsd)}*</p>
       <p className="text-[#D1D5DB] text-sm mt-2 leading-relaxed">{supplement.whenToUse}</p>
       {supplement.productId && (
         <div className="mt-3">

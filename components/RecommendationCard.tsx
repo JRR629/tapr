@@ -6,6 +6,7 @@ import { AffiliateButton } from '@/components/AffiliateButton'
 import { ComparisonLauncher } from '@/components/ComparisonLauncher'
 import { ReportCorrectionModal } from '@/components/ReportCorrectionModal'
 import { SuggestProductModal } from '@/components/SuggestProductModal'
+import { formatPrice } from '@/lib/utils'
 import type { RecommendationTopPick, RecommendationRunnerUp, RecommendationUpgradeOption } from '@/types/recommendation'
 
 interface RecommendationCardProps {
@@ -140,7 +141,7 @@ export function RecommendationCard({
         </h2>
 
         <div className="mb-5">
-          <p className="font-mono text-[#FF6B35] text-2xl">${topPick.priceUsd.toLocaleString()}</p>
+          <p className="font-mono text-[#FF6B35] text-2xl">${formatPrice(topPick.priceUsd)}</p>
         </div>
 
         <div className="mb-5">
@@ -220,7 +221,7 @@ export function RecommendationCard({
               {runnerUp.productName.toUpperCase()}
             </span>
             <span className="font-mono text-[#9CA3AF] text-sm shrink-0">
-              ${runnerUp.priceUsd.toLocaleString()}*
+              ${formatPrice(runnerUp.priceUsd)}*
             </span>
           </div>
         }
@@ -258,7 +259,7 @@ export function RecommendationCard({
                 {upgradeOption.productName.toUpperCase()}
               </span>
               <span className="font-mono text-[#9CA3AF] text-sm shrink-0">
-                ${upgradeOption.priceUsd.toLocaleString()}*
+                ${formatPrice(upgradeOption.priceUsd)}*
               </span>
             </div>
           }

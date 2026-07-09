@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { X, ChevronDown, Search, Zap } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 import type { CompareSlot, DBProductSlot, ExternalProductSlot } from '@/types/comparison'
 import type { GearProduct } from '@/types/gear'
 
@@ -133,7 +134,7 @@ export function ProductPickerDropdown({
               <span className="truncate text-sm text-white leading-snug">{chipLabel}</span>
               {!value.isExternal && (value as DBProductSlot).priceUsd > 0 && (
                 <span className="text-[#6B7280] text-xs font-mono">
-                  ${(value as DBProductSlot).priceUsd.toLocaleString()}
+                  ${formatPrice((value as DBProductSlot).priceUsd)}
                 </span>
               )}
             </span>
@@ -199,7 +200,7 @@ export function ProductPickerDropdown({
                     <div className="min-w-0">
                       <p className="text-white text-sm font-medium truncate">{product.brand} {product.name}</p>
                       <p className="text-[#6B7280] text-xs">
-                        {product.price_usd ? `$${product.price_usd.toLocaleString()}` : 'Price varies'}
+                        {product.price_usd ? `$${formatPrice(product.price_usd)}` : 'Price varies'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 ml-3">

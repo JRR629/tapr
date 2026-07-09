@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Info, AlertTriangle, Zap, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 import { AffiliateButton } from '@/components/AffiliateButton'
+import { formatPrice } from '@/lib/utils'
 import type { ComparisonResult, ComparisonProductAnalysis } from '@/types/comparison'
 
 interface ComparisonResultCardProps {
@@ -151,7 +152,7 @@ function RunnerUpRow({
               {product.productName.toUpperCase()}
             </h3>
             {product.priceUsd != null && (
-              <span className="font-mono text-[#6B7280] text-sm">${product.priceUsd.toLocaleString()}</span>
+              <span className="font-mono text-[#6B7280] text-sm">${formatPrice(product.priceUsd)}</span>
             )}
           </div>
           <FitScoreDots score={product.profileFitScore} />
@@ -233,7 +234,7 @@ export function ComparisonResultCard({ result, categorySlug }: ComparisonResultC
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-3 flex-wrap">
                 {winner.priceUsd != null && (
-                  <span className="font-mono text-[#D1D5DB] text-lg">${winner.priceUsd.toLocaleString()}</span>
+                  <span className="font-mono text-[#D1D5DB] text-lg">${formatPrice(winner.priceUsd)}</span>
                 )}
                 <FitScoreDots score={winner.profileFitScore} />
               </div>

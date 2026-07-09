@@ -10,6 +10,7 @@ import { ComparisonResultCard } from '@/components/ComparisonResultCard'
 import { LoadingProgress } from '@/components/LoadingProgress'
 import { ModeChips } from '@/components/ModeChips'
 import { useComparison } from '@/hooks/useComparison'
+import { formatPrice } from '@/lib/utils'
 import type { CompareSlot, DBProductSlot, ExternalProductSlot, ComparisonResult } from '@/types/comparison'
 
 function formatDate(dateString: string): string {
@@ -436,7 +437,7 @@ function ComparePageInner() {
                     <span className="text-[#FF6B35] text-xs font-semibold uppercase tracking-widest">Our Recommendation</span>
                     <span className="text-white text-sm font-semibold">{slot?.productName ?? '…'}</span>
                     {slot && !slot.isExternal && (slot as DBProductSlot).priceUsd > 0 && (
-                      <span className="text-[#9CA3AF] text-xs">${(slot as DBProductSlot).priceUsd.toLocaleString()}</span>
+                      <span className="text-[#9CA3AF] text-xs">${formatPrice((slot as DBProductSlot).priceUsd)}</span>
                     )}
                   </div>
                 ) : (

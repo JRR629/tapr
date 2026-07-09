@@ -20,11 +20,8 @@ export default function CreditGate({ cost, onProceed, label = 'Continue' }: Cred
       <div>
         <button
           disabled
-          className="bg-[#FF6B35] text-white font-semibold px-6 py-3 rounded-md opacity-50 cursor-not-allowed min-h-[44px] flex items-center gap-2"
+          className="bg-[#FF6B35] text-white font-semibold px-6 py-3 rounded-md opacity-50 cursor-not-allowed min-h-[44px] inline-flex items-center justify-center"
         >
-          <span className="bg-[rgba(255,107,53,0.12)] text-[#FF6B35] text-xs font-semibold px-2 py-1 rounded-full uppercase tracking-wide">
-            {cost} {cost === 1 ? 'Credit' : 'Credits'}
-          </span>
           {label}
         </button>
       </div>
@@ -36,11 +33,8 @@ export default function CreditGate({ cost, onProceed, label = 'Continue' }: Cred
       <div>
         <button
           onClick={onProceed}
-          className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-6 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px] flex items-center gap-2"
+          className="bg-[#FF6B35] hover:bg-[#E55A24] text-white font-semibold px-6 py-3 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[44px] inline-flex items-center justify-center"
         >
-          <span className="bg-[rgba(255,107,53,0.12)] text-[#FF6B35] text-xs font-semibold px-2 py-1 rounded-full uppercase tracking-wide">
-            {cost} {cost === 1 ? 'Credit' : 'Credits'}
-          </span>
           {label}
         </button>
         <p className="text-[#6B7280] text-xs mt-2">
@@ -54,11 +48,8 @@ export default function CreditGate({ cost, onProceed, label = 'Continue' }: Cred
     <div>
       <button
         disabled
-        className="bg-[#FF6B35] text-white font-semibold px-6 py-3 rounded-md opacity-50 cursor-not-allowed min-h-[44px] flex items-center gap-2"
+        className="bg-[#FF6B35] text-white font-semibold px-6 py-3 rounded-md opacity-50 cursor-not-allowed min-h-[44px] inline-flex items-center justify-center"
       >
-        <span className="bg-[rgba(255,107,53,0.12)] text-[#FF6B35] text-xs font-semibold px-2 py-1 rounded-full uppercase tracking-wide">
-          {cost} {cost === 1 ? 'Credit' : 'Credits'}
-        </span>
         {label}
       </button>
       <p className="text-[#6B7280] text-xs mt-2">

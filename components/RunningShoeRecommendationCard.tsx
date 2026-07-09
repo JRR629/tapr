@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { AffiliateButton } from '@/components/AffiliateButton'
 import { ReportCorrectionModal } from '@/components/ReportCorrectionModal'
 import { SuggestProductModal } from '@/components/SuggestProductModal'
+import { formatPrice } from '@/lib/utils'
 import type {
   RunningShoeResult,
   ShoePrimaryPick,
@@ -352,7 +353,7 @@ function AlternativeTile({
         </h3>
         <div className="flex items-baseline gap-2 mt-0.5">
           <p className="font-mono text-[#9CA3AF] text-base">
-            ${alt.priceUsd.toLocaleString()}
+            ${formatPrice(alt.priceUsd)}
           </p>
           <span className="text-[#4B5563] text-xs">approx.</span>
         </div>
@@ -499,7 +500,7 @@ function PrimaryPickSection({
 
       {/* Price */}
       <div>
-        <p className="font-mono text-[#FF6B35] text-2xl">${pick.priceUsd.toLocaleString()}</p>
+        <p className="font-mono text-[#FF6B35] text-2xl">${formatPrice(pick.priceUsd)}</p>
       </div>
 
       {/* Affiliate CTA */}

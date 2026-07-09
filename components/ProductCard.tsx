@@ -1,3 +1,4 @@
+import { formatPrice } from '@/lib/utils'
 import type { GearProduct } from '@/types/gear'
 
 interface ProductCardProps {
@@ -10,7 +11,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <h3 className="font-display text-2xl text-white">{product.name.toUpperCase()}</h3>
       <p className="text-[#6B7280] text-sm">{product.brand}</p>
       {product.price_usd && (
-        <p className="font-mono text-[#FF6B35] mt-2">${product.price_usd}</p>
+        <p className="font-mono text-[#FF6B35] mt-2">${formatPrice(product.price_usd)}</p>
       )}
     </div>
   )

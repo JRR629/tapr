@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { DateSelect } from '@/components/DateSelect'
+import { formatPrice } from '@/lib/utils'
 import type { GearCategory } from '@/types/gear'
 import type { GearProductWithReviews, ReviewSource } from '@/types/gear'
 
@@ -1106,7 +1107,7 @@ export function AdminProductsClient({ products: initialProducts, categories }: P
                       {product.gear_categories?.name ?? categoryName(product.category_id)}
                     </td>
                     <td className="px-4 py-3 text-gray-300 whitespace-nowrap">
-                      {product.price_usd != null ? `$${product.price_usd.toLocaleString()}` : '—'}
+                      {product.price_usd != null ? `$${formatPrice(product.price_usd)}` : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <TierBadge tier={product.price_tier} />
