@@ -109,6 +109,20 @@ export function useRecommendation() {
       try {
         const parsed = parseModelJson<RecommendationResult | RunningShoeResult | NutritionResult>(jsonAccumulated)
 
+        // Guard against an incomplete result (e.g. a truncated/timed-out response
+        // that jsonrepair salvaged only partially). If none of the expected
+        // top-level picks are present, treat it as a clean failure rather than
+        // rendering a card that crashes on missing fields.
+        const p = parsed as unknown as Record<string, unknown>
+        const pick = (v: unknown) => !!(v as { productName?: string } | undefined)?.productName
+        const nonEmpty = (v: unknown) => Array.isArray(v) && v.length > 0
+        const hasContent =
+          pick(p.topPick) || pick(p.primaryPick) ||
+          nonEmpty(p.viableOptions) || nonEmpty(p.bikeOptions) || nonEmpty(p.runOptions)
+        if (!hasContent) {
+          throw new Error('Recommendation came back incomplete. Please try again.')
+        }
+
         // ── Enrich sourcesDrawnFrom with URLs from our database (authoritative) ──
         if (Object.keys(sourceUrlMap).length > 0 && 'sourcesDrawnFrom' in parsed && Array.isArray(parsed.sourcesDrawnFrom)) {
           parsed.sourcesDrawnFrom = parsed.sourcesDrawnFrom.map((s) => {
