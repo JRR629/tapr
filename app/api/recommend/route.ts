@@ -296,10 +296,12 @@ export async function POST(request: Request) {
           controller.enqueue(encoder.encode(`\n__IMAGE_MAP__:${JSON.stringify(imageMap)}`))
         }
 
-        controller.close()
-
-        // 10. Background save — do not await, do not block stream close
-        void (async () => {
+        // 10. Persist the recommendation BEFORE closing the stream. Fire-and-forget
+        // work AFTER close() is unreliable on Vercel — the function freezes once
+        // the response finishes (esp. with Fluid Compute), silently dropping the
+        // save while the credit was already charged. Awaiting here guarantees it
+        // runs within the request. Adds ~a few hundred ms before the stream ends.
+        await (async () => {
           try {
             // Parse Claude response
             let result: RecommendationResult | NutritionResult | RunningShoeResult
@@ -442,6 +444,7 @@ export async function POST(request: Request) {
 
             if (recError || !savedRec) {
               console.error('[recommend] failed to save recommendation:', recError?.message)
+              await refundCredit()
               return
             }
 
@@ -478,6 +481,8 @@ export async function POST(request: Request) {
             }
           }
         })()
+
+        controller.close()
       },
     })
 

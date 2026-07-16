@@ -256,10 +256,11 @@ export async function POST(request: Request) {
           controller.enqueue(encoder.encode(`\n__SOURCE_URLS__:${JSON.stringify(sourceUrlMap)}`))
         }
 
-        controller.close()
-
-        // Background save — do not await, do not block stream close
-        void (async () => {
+        // Persist BEFORE closing the stream. Fire-and-forget after close() is
+        // unreliable on Vercel — the function freezes once the response finishes
+        // (esp. with Fluid Compute), which silently dropped saves while the credit
+        // was already charged. Awaiting guarantees it runs within the request.
+        await (async () => {
           try {
             let result: ComparisonResult
             try {
@@ -295,11 +296,14 @@ export async function POST(request: Request) {
 
             if (saveError) {
               console.error('[compare] failed to save comparison:', saveError.message)
+              await refundCredits()
             }
           } catch (bgErr) {
             console.error('[compare] background save error:', bgErr)
           }
         })()
+
+        controller.close()
       },
     })
 
