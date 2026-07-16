@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
+import Link from 'next/link'
 import { Waves, Watch, Eye, Shirt, Footprints, Zap, Bike, Package } from 'lucide-react'
 import type { GearCategory } from '@/types/gear'
 import type { AthleteProfile } from '@/types/profile'
-import { CategoryActionModal } from './CategoryActionModal'
 import { useAthleteProfile } from '@/hooks/useAthleteProfile'
 
 interface CategoryGridProps {
@@ -44,7 +44,6 @@ function getCategoryPriority(category: GearCategory, profile: AthleteProfile | n
 }
 
 export function CategoryGrid({ categories }: CategoryGridProps) {
-  const [openCategory, setOpenCategory] = useState<GearCategory | null>(null)
   const { profile } = useAthleteProfile()
   const active = categories.filter((c) => c.is_active)
   const comingSoon = categories.filter((c) => !c.is_active)
@@ -65,10 +64,9 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
           const priority = getCategoryPriority(category, profile)
           const isTertiary = priority === 2
           return (
-            <button
+            <Link
               key={category.id}
-              type="button"
-              onClick={() => setOpenCategory(category)}
+              href={`/gear/${category.slug}`}
               className={`text-left bg-[#0F2040] border border-[#1A3A5C] hover:border-[#FF6B35] rounded-xl p-6 flex flex-col gap-4 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30 duration-200 focus:outline-none focus-visible:border-[#FF6B35] focus-visible:shadow-xl relative ${isTertiary ? 'opacity-50' : ''}`}
             >
               {isTertiary && (
@@ -89,7 +87,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
                   </p>
                 )}
               </div>
-            </button>
+            </Link>
           )
         })}
       </div>
@@ -110,8 +108,6 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
           </div>
         </div>
       )}
-
-      <CategoryActionModal category={openCategory} onClose={() => setOpenCategory(null)} />
     </div>
   )
 }
