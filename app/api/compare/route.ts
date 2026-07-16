@@ -1,4 +1,6 @@
-export const maxDuration = 60
+// Vercel Pro allows up to 300s. Comparisons (esp. 3–4 products at 6144 tokens)
+// run ~100s and were timing out at the old 60s cap.
+export const maxDuration = 300
 
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
@@ -197,10 +199,9 @@ export async function POST(request: Request) {
     try {
       streamResponse = anthropic.messages.stream({
         model: TAPR_MODEL,
-        // 6144 tokens was ~100s of generation — structurally over the 60s function
-        // limit, so longer comparisons always timed out. 4096 keeps generation
-        // within budget; incomplete results now fail cleanly (guarded in the card).
-        max_tokens: 4096,
+        // Restored to full richness now that maxDuration=300 (Vercel Pro) gives
+        // ample headroom for ~100s of generation.
+        max_tokens: 6144,
         system: TAPR_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],
       })

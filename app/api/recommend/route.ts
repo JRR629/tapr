@@ -1,3 +1,7 @@
+// Headroom for the streamed AI recommendation (~4096 tokens). Explicit so it
+// never falls back to a short platform default post-Pro-upgrade.
+export const maxDuration = 120
+
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
