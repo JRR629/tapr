@@ -36,10 +36,10 @@ Two bugs were found and fixed along the way:
 
 > Your site reads its secret keys from Vercel. They must be marked for the **Production** environment.
 
-- [ ] `vercel.com` → project **`tapr-tio3`** → **Settings** → **Environment Variables**
-- [ ] Confirm these include **"Production"** in their environment label:
-  - [ ] `STRIPE_SECRET_KEY`
-  - [ ] `NEXT_PUBLIC_SENTRY_DSN`
+- [X] `vercel.com` → project **`tapr-tio3`** → **Settings** → **Environment Variables**
+- [X] Confirm these include **"Production"** in their environment label:
+  - [X- SAYS PRODUCTION AND PREVIEW] `STRIPE_SECRET_KEY`
+  - [X- SAYS PRODUCTION AND PREVIEW] `NEXT_PUBLIC_SENTRY_DSN`
 
 > NOTE: Vercel hides secret values (you'll see dots) — that's why the real $2.99 purchase (already
 > passed) was the true test of the live Stripe key.
@@ -53,9 +53,9 @@ Two bugs were found and fixed along the way:
 
 > Your site sends email as `hello@taprai.com`. That only works if the domain is verified.
 
-- [ ] `resend.com` → **Domains**
-- [ ] Find **`taprai.com`** and check its status:
-  - [ ] **"Verified"** (green) → done ✅
+- [x] `resend.com` → **Domains**
+- [x] Find **`taprai.com`** and check its status:
+  - [x] **"Verified"** (green) → done ✅
   - [ ] **"Pending" / red** → click into it, it shows DNS records to add → tell Claude what it shows
   - [ ] Not in the list at all → tell Claude
 
@@ -63,30 +63,32 @@ Two bugs were found and fixed along the way:
 
 ---
 
-## TASK 4 — Supabase: turn on one security setting
+## ⚠️ TASK 4 — Supabase password security (NOT done — needs a decision)
 
-> Blocks signups using passwords known to be leaked in past hacks. One toggle.
+> Supabase's own security check confirms **"Leaked Password Protection Disabled"** — so despite the
+> toggle, it is NOT on. That specific feature (the HaveIBeenPwned check) is **Pro-plan only**, so it
+> can't be enabled on the free plan.
 
-- [ ] `supabase.com/dashboard` → your Tapr project → **Authentication**
-- [ ] Find **"Leaked password protection"**
-      (may live under "Attack Protection," "Policies," or "Password security")
-- [ ] Switch it **ON**, save if needed
-- [ ] Can't find it → tell Claude (he can locate it from the security advisories)
+DECIDE:
+- [ ] **Option A** — upgrade Supabase to Pro ($25/mo), then the leaked-password toggle works. Overkill just for this right now.
+- [ ] **Option B (recommended)** — stay free, skip leaked-password, do the FREE hardening instead:
+  - [ ] Minimum password length: change **6 → 8**
+  - [ ] Password requirements: pick a required mix (lower + upper + digits)
+  - [ ] Secure password change: **ON**
+  - [ ] Require current password when updating: **ON**
+  - [ ] Save
 
 **Task 4 result: _______________________________________________**
 
 ---
 
-## CODE FOLLOW-UPS (Claude handles — not your dashboards)
+## ✅ CODE FOLLOW-UPS — DEPLOYED (live in production, commit 1f3b3be)
 
-Both are coded and build-verified, but NOT yet deployed. Claude will push them together.
-
-- [x] Orange border removed from the "Most Popular" credit pack (badge is enough) — coded
-- [x] Misleading "credits added" message fixed — the billing page now verifies the real
-      purchase (polls for the webhook's credit_transactions row) and only says "added" once
-      credits truly land; shows "confirming…" first, and an honest "processing" note if the
-      webhook is slow. Balance refreshes live on confirm. — coded
-- [ ] DEPLOY the two items above (Claude: commit → merge to main → push)
+- [x] Orange border removed from the "Most Popular" credit pack (badge is enough)
+- [x] "Credits added" message now verifies the REAL purchase before claiming success — polls
+      /api/stripe/verify for the webhook's credit_transactions row; shows "confirming…" first, an
+      honest "processing" note if the webhook is slow, and refreshes the balance live on confirm
+- [x] Admin link is live (ADMIN_USER_ID set in Vercel) — amber dashboard icon in the header
 
 ---
 
