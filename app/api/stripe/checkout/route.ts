@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/billing?success=true&pack=${pack}`,
+      success_url: `${appUrl}/billing?success=true&pack=${pack}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/billing?canceled=true`,
       customer_email: user.email,
       metadata: { supabase_user_id: user.id, pack },
