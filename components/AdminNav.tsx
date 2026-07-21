@@ -1,8 +1,9 @@
 import Link from 'next/link'
 
 // Shared admin sub-navigation. Rendered at the top of each /admin/* page so the
-// three admin surfaces are reachable from one another.
+// admin surfaces are reachable from one another.
 const LINKS = [
+  { href: '/admin/users', label: 'Users' },
   { href: '/admin/products', label: 'Products' },
   { href: '/admin/recommendations', label: 'Recommendations' },
   { href: '/admin/feedback', label: 'Feedback' },
