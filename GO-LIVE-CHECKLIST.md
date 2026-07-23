@@ -63,22 +63,16 @@ Two bugs were found and fixed along the way:
 
 ---
 
-## ⚠️ TASK 4 — Supabase password security (NOT done — needs a decision)
+## ✅ TASK 4 — Supabase password security: RESOLVED
 
-> Supabase's own security check confirms **"Leaked Password Protection Disabled"** — so despite the
-> toggle, it is NOT on. That specific feature (the HaveIBeenPwned check) is **Pro-plan only**, so it
-> can't be enabled on the free plan.
+**Decision:** stay on the free plan (no Pro upgrade). Free hardening applied:
+- [x] Minimum password length 6 → 8
+- [x] Password requirements: required mix (lower + upper + digits)
+- [x] Secure password change: ON
+- [x] Require current password when updating: ON
 
-DECIDE:
-- [ ] **Option A** — upgrade Supabase to Pro ($25/mo), then the leaked-password toggle works. Overkill just for this right now.
-- [ ] **Option B (recommended)** — stay free, skip leaked-password, do the FREE hardening instead:
-  - [ ] Minimum password length: change **6 → 8**
-  - [ ] Password requirements: pick a required mix (lower + upper + digits)
-  - [ ] Secure password change: **ON**
-  - [ ] Require current password when updating: **ON**
-  - [ ] Save
-
-**Task 4 result: _______________________________________________**
+Consciously **skipped**: leaked-password protection (HaveIBeenPwned) — Pro-plan only,
+not worth an upgrade now. Revisit if you ever move Supabase to Pro.
 
 ---
 
@@ -89,9 +83,18 @@ DECIDE:
       /api/stripe/verify for the webhook's credit_transactions row; shows "confirming…" first, an
       honest "processing" note if the webhook is slow, and refreshes the balance live on confirm
 - [x] Admin link is live (ADMIN_USER_ID set in Vercel) — amber dashboard icon in the header
+- [x] Social share card (OG image) live — generated 1200×630 branded card (commit 1266e7f)
+- [x] Apex domain fixed — `taprai.com` now resolves and redirects to `www.taprai.com`
 
 ---
 
-## When you're done
+## 🚀 LAUNCH READY
 
-Tell Claude the result of Tasks 2–4 in plain words. Stripe (Task 1) is already done.
+Every go-live item is complete. Working and verified: live site, custom domain
+(`taprai.com` → `www`), payments (buy → webhook → credits, proven with a real purchase),
+honest purchase confirmation, admin access, Sentry error monitoring, Resend email, and the
+social share card. Only consciously-skipped item: Supabase leaked-password protection (Pro-only).
+
+### Known post-launch follow-ups (none blocking)
+- Swap Preview env to a TEST Stripe key (so preview URLs can't charge real cards)
+- Wetsuit affiliate links — reapply for affiliate status after some sales/traffic (~3 months or ~500 users)
