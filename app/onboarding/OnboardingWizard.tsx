@@ -321,6 +321,7 @@ function Step5({ answers, update }: { answers: WizardAnswers; update: (a: Partia
         onChange={(v) => update({ date_of_birth: v })}
         range="past"
         ariaPrefix="Birth"
+        precision="month"
       />
     </div>
   )
@@ -748,7 +749,7 @@ const QUESTION_BY_KEY: Record<string, string> = {
   experience_level: 'How long have you been training in your sport?',
   background_sport: 'What sport or activity is your strongest background?',
   gender: 'What is your gender?',
-  date_of_birth: 'What is your date of birth?',
+  date_of_birth: 'When were you born?',
   country: 'Where are you based?',
   height: 'What is your height?',
   weight: 'What is your weight?',

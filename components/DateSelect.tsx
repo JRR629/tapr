@@ -14,6 +14,12 @@ interface DateSelectProps {
   range: 'past' | 'recent' | 'future'
   /** Prefix for aria-labels, e.g. "Birth" → "Birth month". */
   ariaPrefix?: string
+  /**
+   * 'full'  = Month / Day / Year (default — races, review dates).
+   * 'month' = Month / Year only; stores 'YYYY-MM-01'. Used for birthdays,
+   *           where the day adds no value to age calculation.
+   */
+  precision?: 'full' | 'month'
 }
 
 const MONTHS: [string, string][] = [
@@ -30,7 +36,7 @@ const SELECT_CLS =
 // popup is browser-controlled (unthemeable, inconsistent, finicky). On mobile
 // each dropdown becomes the native wheel picker. Stores 'YYYY-MM-DD' only when
 // all three are chosen; '' otherwise.
-export function DateSelect({ value, onChange, range, ariaPrefix = '' }: DateSelectProps) {
+export function DateSelect({ value, onChange, range, ariaPrefix = '', precision = 'full' }: DateSelectProps) {
   const parts = (value || '').split('-')
   const [year, setYear] = useState(parts[0] ?? '')
   const [month, setMonth] = useState(parts[1] ?? '')
@@ -51,6 +57,10 @@ export function DateSelect({ value, onChange, range, ariaPrefix = '' }: DateSele
   )
 
   const sync = (yy: string, mm: string, dd: string) => {
+    if (precision === 'month') {
+      onChange(yy && mm ? `${yy}-${mm}-01` : '')
+      return
+    }
     const maxD = daysInMonth(yy, mm)
     if (dd && Number(dd) > maxD) {
       dd = String(maxD).padStart(2, '0')
@@ -62,17 +72,19 @@ export function DateSelect({ value, onChange, range, ariaPrefix = '' }: DateSele
   const lbl = (s: string) => (ariaPrefix ? `${ariaPrefix} ${s}` : s)
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className={`grid ${precision === 'month' ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
       <select aria-label={lbl('month')} value={month} className={SELECT_CLS}
         onChange={(e) => { setMonth(e.target.value); sync(year, e.target.value, day) }}>
         <option value="">Month</option>
         {MONTHS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
-      <select aria-label={lbl('day')} value={day} className={SELECT_CLS}
-        onChange={(e) => { setDay(e.target.value); sync(year, month, e.target.value) }}>
-        <option value="">Day</option>
-        {days.map((v) => <option key={v} value={v}>{Number(v)}</option>)}
-      </select>
+      {precision === 'full' && (
+        <select aria-label={lbl('day')} value={day} className={SELECT_CLS}
+          onChange={(e) => { setDay(e.target.value); sync(year, month, e.target.value) }}>
+          <option value="">Day</option>
+          {days.map((v) => <option key={v} value={v}>{Number(v)}</option>)}
+        </select>
+      )}
       <select aria-label={lbl('year')} value={year} className={SELECT_CLS}
         onChange={(e) => { setYear(e.target.value); sync(e.target.value, month, day) }}>
         <option value="">Year</option>

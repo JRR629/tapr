@@ -347,12 +347,13 @@ export function ProfileEditClient({ profile }: ProfileEditClientProps) {
           </div>
 
           <div>
-            <label className={labelClass}>Date of Birth</label>
+            <label className={labelClass}>Birth Month &amp; Year</label>
             <DateSelect
               value={form.date_of_birth ?? ''}
               onChange={(v) => setField('date_of_birth', v)}
               range="past"
               ariaPrefix="Birth"
+              precision="month"
             />
           </div>
 

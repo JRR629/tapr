@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { enrichCitedSources } from '@/lib/sources'
 
 export async function GET(
   _request: Request,
@@ -33,36 +34,41 @@ export async function GET(
       return Response.json({ error: 'Recommendation not found', code: 'NOT_FOUND' }, { status: 404 })
     }
 
-    // Enrich sourcesDrawnFrom with real URLs from the review_sources table.
-    // This handles both old recommendations (plain strings) and new ones (already enriched at stream time).
+    // Enrich sourcesDrawnFrom with real URLs from our review data.
+    // Handles both old recommendations (plain strings) and new ones (already
+    // enriched at stream time — existing URLs are preserved, not clobbered).
     const productIds = [data.top_pick_product_id, data.runner_up_product_id].filter(Boolean) as string[]
 
     if (productIds.length > 0) {
-      const { data: sources } = await adminDb
-        .from('review_sources')
-        .select('source_name, source_url')
-        .in('product_id', productIds)
-        .not('source_url', 'is', null)
+      // Sources live in review_sources for most categories, but in
+      // product_review_mentions → review_articles for running shoes & nutrition.
+      // Pull both and merge so every category's sources resolve to a URL.
+      const [{ data: sources }, { data: mentions }] = await Promise.all([
+        adminDb
+          .from('review_sources')
+          .select('source_name, source_url')
+          .in('product_id', productIds)
+          .not('source_url', 'is', null),
+        adminDb
+          .from('product_review_mentions')
+          .select('review_articles(source_name, url)')
+          .in('product_id', productIds),
+      ])
 
-      if (sources && sources.length > 0) {
-        const urlMap: Record<string, string> = {}
-        for (const s of sources) {
-          if (s.source_name && s.source_url) {
-            urlMap[s.source_name] = s.source_url
-          }
-        }
+      const urlMap: Record<string, string> = {}
+      for (const s of sources ?? []) {
+        if (s.source_name && s.source_url) urlMap[s.source_name] = s.source_url
+      }
+      for (const m of mentions ?? []) {
+        const ra = (m as { review_articles?: { source_name?: string; url?: string } | { source_name?: string; url?: string }[] }).review_articles
+        const art = Array.isArray(ra) ? ra[0] : ra
+        if (art?.source_name && art?.url) urlMap[art.source_name] = art.url
+      }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const recJson = data.recommendation_json as any
-        if (Array.isArray(recJson?.sourcesDrawnFrom)) {
-          recJson.sourcesDrawnFrom = recJson.sourcesDrawnFrom.map(
-            (s: string | { name: string; url?: string }) => {
-              const name = typeof s === 'string' ? s : s.name
-              const url = urlMap[name]
-              return url ? { name, url } : { name }
-            }
-          )
-        }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recJson = data.recommendation_json as any
+      if (Array.isArray(recJson?.sourcesDrawnFrom)) {
+        recJson.sourcesDrawnFrom = enrichCitedSources(recJson.sourcesDrawnFrom, urlMap)
       }
     }
 

@@ -49,7 +49,7 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc pl-6 mt-2 space-y-1">
               <li>Your sport and race distances</li>
-              <li>Background sport, gender, and date of birth</li>
+              <li>Background sport, gender, and birth month and year</li>
               <li>City and state</li>
               <li>Height and weight</li>
               <li>Body measurements (inseam, torso length, arm span, shoulder width, chest and hip circumference, neck circumference)</li>

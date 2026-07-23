@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { track } from '@vercel/analytics'
 import { parseModelJson } from '@/lib/parseModelJson'
 import { notifyCreditsChanged } from '@/lib/creditsEvents'
+import { enrichCitedSources } from '@/lib/sources'
 import type { RecommendationResult, RunningShoeResult, NutritionResult, Layer2Responses } from '@/types/recommendation'
 
 export function useRecommendation() {
@@ -124,12 +125,10 @@ export function useRecommendation() {
         }
 
         // ── Enrich sourcesDrawnFrom with URLs from our database (authoritative) ──
-        if (Object.keys(sourceUrlMap).length > 0 && 'sourcesDrawnFrom' in parsed && Array.isArray(parsed.sourcesDrawnFrom)) {
-          parsed.sourcesDrawnFrom = parsed.sourcesDrawnFrom.map((s) => {
-            const name = typeof s === 'string' ? s : (s as { name: string }).name
-            const url = sourceUrlMap[name]
-            return url ? { name, url } : { name }
-          })
+        // Tolerant name matching + drops anything unlinkable, so every rendered
+        // source bubble is clickable. See lib/sources.ts.
+        if ('sourcesDrawnFrom' in parsed && Array.isArray(parsed.sourcesDrawnFrom)) {
+          parsed.sourcesDrawnFrom = enrichCitedSources(parsed.sourcesDrawnFrom, sourceUrlMap)
         }
 
         // ── Inject imageUrl into each product pick (server-resolved, never from Claude) ──

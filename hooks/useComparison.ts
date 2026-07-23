@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { parseModelJson } from '@/lib/parseModelJson'
 import { notifyCreditsChanged } from '@/lib/creditsEvents'
+import { enrichCitedSources } from '@/lib/sources'
 import type { ComparisonResult } from '@/types/comparison'
 
 export function useComparison() {
@@ -103,13 +104,10 @@ export function useComparison() {
       try {
         const parsed = parseModelJson<ComparisonResult>(jsonAccumulated)
 
-        // Enrich sourcesDrawnFrom with URLs from our database (authoritative)
-        if (Object.keys(sourceUrlMap).length > 0) {
-          parsed.sourcesDrawnFrom = parsed.sourcesDrawnFrom.map((s) => {
-            const name = typeof s === 'string' ? s : s.name
-            const url = sourceUrlMap[name]
-            return url ? { name, url } : { name }
-          })
+        // Enrich sourcesDrawnFrom with URLs from our database (authoritative).
+        // Tolerant name matching + drops anything unlinkable. See lib/sources.ts.
+        if (Array.isArray(parsed.sourcesDrawnFrom)) {
+          parsed.sourcesDrawnFrom = enrichCitedSources(parsed.sourcesDrawnFrom, sourceUrlMap)
         }
 
         setResult(parsed)

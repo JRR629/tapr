@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Minus } from 'lucide-react'
@@ -1256,10 +1256,22 @@ function BudgetInput({ valueMin, valueMax, noLimit, onChangeMin, onChangeMax, on
     setMinText(String(clamped))
   }
 
+  const maxInputRef = useRef<HTMLInputElement>(null)
+
+  // Switch from "No limit" into numeric entry: start EMPTY (never a stale
+  // default the user didn't choose) and focus so they type their own ceiling.
+  function enterMaxEntry() {
+    onToggleNoLimit(false)
+    setMaxText('')
+    requestAnimationFrame(() => maxInputRef.current?.focus())
+  }
+
   function commitMax(raw: string) {
-    const v = parseInt(raw.replace(/\D/g, ''), 10)
-    if (isNaN(v) || v === 0) {
-      setMaxText(String(valueMax))
+    const digits = raw.replace(/\D/g, '')
+    const v = parseInt(digits, 10)
+    // Left blank — treat as "no upper limit" rather than snapping to a default.
+    if (digits === '' || isNaN(v) || v === 0) {
+      onToggleNoLimit(true)
       return
     }
     const clamped = Math.max(v, valueMin + 1)
@@ -1296,7 +1308,7 @@ function BudgetInput({ valueMin, valueMax, noLimit, onChangeMin, onChangeMax, on
           {noLimit ? (
             <button
               type="button"
-              onClick={() => { onToggleNoLimit(false); setMaxText(String(valueMax)) }}
+              onClick={enterMaxEntry}
               className="w-full bg-[#0A1628] border border-[#22C55E] text-[#22C55E] font-semibold text-base rounded-md py-3 px-3 flex items-center justify-center gap-1.5 transition-all hover:bg-[#22C55E10]"
             >
               <span className="text-lg leading-none">∞</span>
@@ -1306,12 +1318,14 @@ function BudgetInput({ valueMin, valueMax, noLimit, onChangeMin, onChangeMax, on
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280] font-mono text-sm pointer-events-none">$</span>
               <input
+                ref={maxInputRef}
                 type="text"
                 inputMode="numeric"
                 value={maxText}
+                placeholder={String(valueMax)}
                 onChange={(e) => setMaxText(e.target.value.replace(/\D/g, ''))}
                 onBlur={(e) => commitMax(e.target.value)}
-                className={`${inputBase} pl-7 pr-3`}
+                className={`${inputBase} pl-7 pr-3 placeholder:text-[#6B7280] placeholder:font-normal`}
               />
             </div>
           )}

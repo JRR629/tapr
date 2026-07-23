@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { isPasswordValid, friendlyPasswordError, humanizeAuthError } from '@/lib/validation/password'
+import { PasswordRequirements } from '@/components/auth/PasswordRequirements'
 
 function UpdatePasswordContent() {
   const router = useRouter()
@@ -64,8 +66,8 @@ function UpdatePasswordContent() {
       return
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long.')
+    if (!isPasswordValid(password)) {
+      setError(friendlyPasswordError(password))
       return
     }
 
@@ -85,7 +87,7 @@ function UpdatePasswordContent() {
 
     if (updateError) {
       console.error('[update-password] updateUser error:', updateError.message)
-      setError('Failed to update password. Please try again.')
+      setError(humanizeAuthError(updateError.message, password))
       setState('ready')
       setIsLoading(false)
       return
@@ -223,12 +225,13 @@ function UpdatePasswordContent() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 8 characters"
+                placeholder="Create a new password"
                 required
                 autoComplete="new-password"
                 disabled={isLoading}
                 className="w-full bg-[#0A1628] border border-[#1A3A5C] text-white placeholder-[#6B7280] rounded-md px-4 py-3 focus:border-[#FF6B35] focus:outline-none focus:shadow-[0_0_0_3px_rgba(255,107,53,0.15)] transition-all min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed"
               />
+              <PasswordRequirements password={password} />
             </div>
 
             <div>

@@ -6,6 +6,8 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { track } from '@vercel/analytics'
 import { createClient } from '@/lib/supabase/client'
+import { isPasswordValid, friendlyPasswordError, humanizeAuthError } from '@/lib/validation/password'
+import { PasswordRequirements } from '@/components/auth/PasswordRequirements'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -25,8 +27,8 @@ export default function SignupPage() {
       return
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+    if (!isPasswordValid(password)) {
+      setError(friendlyPasswordError(password))
       return
     }
 
@@ -42,7 +44,7 @@ export default function SignupPage() {
     })
 
     if (authError) {
-      setError(authError.message)
+      setError(humanizeAuthError(authError.message, password))
       setIsLoading(false)
       return
     }
@@ -146,11 +148,12 @@ export default function SignupPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min 8 characters"
+                placeholder="Create a password"
                 required
                 autoComplete="new-password"
                 className="w-full bg-[#0A1628] border border-[#1A3A5C] text-white placeholder-[#6B7280] rounded-md px-4 py-3 focus:border-[#FF6B35] focus:outline-none focus:shadow-[0_0_0_3px_rgba(255,107,53,0.15)] transition-all min-h-[44px]"
               />
+              <PasswordRequirements password={password} />
             </div>
 
             <div>
